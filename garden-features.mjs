@@ -1,4 +1,4 @@
-import { STAGES, SEEDS, newRun, stageFor, picksToday, plant, harvest, chooseUpgrade, sanitizeState, sanitizeCampaign } from './campaign-core.mjs';
+import { STAGES, SEEDS, newRun, stageFor, picksToday, plant, harvest, chooseUpgrade, sanitizeState, sanitizeCampaign } from './campaign-core.mjs?v=20261013-8';
 import { newRun as legacyRun } from './campaign-legacy-v7.mjs';
 
 export const FEATURE_KEY = 'sunlit-garden:features:v1';

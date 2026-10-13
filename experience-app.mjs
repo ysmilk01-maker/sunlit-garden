@@ -1,6 +1,6 @@
 import {SEEDS,UPGRADES,WEATHER,STAGES,RUN_DAYS,newRun,stageFor,picksToday,plant,undo,forecast,harvest,chooseUpgrade,rerollUpgrades,rerollsRemaining,loadRun,saveRun,loadCampaign,saveCampaign,recordResult,canPlay} from './campaign-core.mjs?v=20261013-8';
 import {plantArt} from './garden-art.mjs?v=20261013-8';
-import {DECORATIONS,loadProfile,saveProfile,missionFor,claimHarvest,claimClear,reconcileCampaign,starsFor,summaryFor,selectDecoration,setOptions} from './garden-features.mjs?v=20261013-8';
+import {DECORATIONS,loadProfile,saveProfile,missionFor,claimHarvest,claimClear,reconcileCampaign,starsFor,summaryFor,selectDecoration,setOptions} from './garden-features.mjs?v=20261013-8.1';
 import {createGardenMusic} from './garden-music.mjs?v=20261013-7';
 import * as LEGACY from './campaign-legacy-v7.mjs';
 const $=id=>document.getElementById(id);

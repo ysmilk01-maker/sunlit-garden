@@ -1,6 +1,6 @@
 # 햇빛정원 · 백 개의 정원
 
-[아이폰 Safari에서 테스트 플레이](https://ysmilk01-maker.github.io/sunlit-garden/?v=20261013-8)
+[아이폰 Safari에서 테스트 플레이](https://ysmilk01-maker.github.io/sunlit-garden/?v=20261013-8.1)
 
 로그인 없이 실행하는 개발 중인 세로 화면 정원 게임입니다.
 
