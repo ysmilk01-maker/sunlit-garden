@@ -50,3 +50,8 @@
  dialog[data-mode="seed-advice"]{padding:13px}.seed-guide-intro{gap:7px;margin-bottom:4px}.seed-guide-intro>.plant-art{width:32px;height:32px}.seed-guide-intro p{font-size:11px}.seed-guide-tabs{margin:5px 0;gap:4px}
  .seed-rule-page{min-height:140px}.seed-rule{padding:5px 0;font-size:11px;line-height:1.4}.seed-rule b{min-width:50px}.seed-guide-note{margin:4px 0;font-size:9px}.seed-guide-nav{margin:4px 0}.seed-guide-compare{margin:5px 0}.seed-calc-summary{font-size:10px;padding:5px 7px}.seed-calc-summary strong{font-size:11px}
 }
+
+/* v16: seed selection opens traits immediately; base and growth stay together. */
+.seed-growth{display:block;color:#52714a;font-size:10px;line-height:1.4}
+.seed-growth+br{display:none}
+.seed-maturity-warning{font-weight:700;color:#995329}
