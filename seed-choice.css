@@ -55,3 +55,48 @@
 .seed-growth{display:block;color:#52714a;font-size:10px;line-height:1.4}
 .seed-growth+br{display:none}
 .seed-maturity-warning{font-weight:700;color:#995329}
+
+/* v17: read characteristics beside the choices; planting stays one tap away. */
+.game,.game.has-seed-advice{grid-template-rows:79px minmax(0,1fr) 222px 50px}
+.draft{grid-template-rows:20px 78px 116px;gap:4px}
+.seed-cards,.game.has-seed-advice #seed-cards{height:78px}
+.seed-card{height:78px;min-height:78px;grid-template-rows:31px 17px 20px;padding:4px}
+.seed-card .seed-condition{display:none}
+.seed-strategy{display:block;padding:7px 9px;min-height:0}
+.seed-strategy>.seed-inline{display:block;min-width:0}
+.seed-inline-head{display:flex;justify-content:space-between;gap:5px;align-items:baseline;margin-bottom:4px}
+.seed-inline-head strong{font-size:12px;color:#f4d78d}.seed-inline-head span{font-size:10px;color:#d7dec0}
+.seed-inline-traits p{display:block;font-size:12px;line-height:1.4;margin:1px 0;word-break:keep-all;color:#f1edcf;overflow:visible;-webkit-line-clamp:unset}
+.seed-inline-meta{display:block;font-size:10px;line-height:1.4;margin:4px 0 0;color:#bdcfad;overflow:visible;-webkit-line-clamp:unset}
+.seed-inline-traits .seed-inline-warning{color:#ffd29d}
+.zoom-seed-inline{border-radius:10px;background:#eaf0d7;border:1px solid #cbd6b7;padding:5px 8px;margin-top:5px}
+.zoom-seed-inline .seed-inline-head strong{color:#365f3f}.zoom-seed-inline .seed-inline-head span,.zoom-seed-inline .seed-inline-meta{color:#64734b}.zoom-seed-inline .seed-inline-traits p{color:#355a3d}.zoom-seed-inline .seed-inline-warning{color:#8f4b27}
+.zoom-cards .seed-card{height:62px;min-height:62px;grid-template-rows:25px 13px 16px;padding:3px}
+.zoom-cards .seed-card .seed-condition{display:none}
+dialog[data-mode="upgrade"] .strategy-upgrade{min-height:76px;padding:7px 9px;align-items:center;gap:7px}
+dialog[data-mode="upgrade"] .strategy-upgrade>.upgrade-effect,dialog[data-mode="upgrade"] .strategy-upgrade .upgrade-effect{font-size:11px;line-height:1.4;color:#425d3d;white-space:normal}
+.upgrade-effect>span{display:block}
+dialog[data-mode="upgrade"] .strategy-upgrade>b{font-size:17px;min-width:42px}
+dialog[data-mode="upgrade"] .choice-actions{grid-template-columns:1fr}
+dialog[data-mode="upgrade"] .choice-explanation{min-height:78px;padding:7px 9px}
+.upgrade-preview-numbers{font-size:11px;line-height:1.4;margin:0 0 5px;color:#365f3f;font-variant-numeric:tabular-nums}.upgrade-preview-numbers b{display:block;font-size:10px;color:#788257}
+.upgrade-preview-reason{font-size:12px;line-height:1.45;word-break:keep-all;margin:0;color:#466343}
+dialog[data-mode="upgrade"] .choice-prompt{font-size:11px;line-height:1.5;margin:8px 0}
+@media(max-height:740px) and (orientation:portrait){
+ .game,.game.has-seed-advice{grid-template-rows:68px minmax(0,1fr) 187px 46px}
+ .draft{grid-template-rows:18px 68px 97px;gap:2px}.seed-cards,.game.has-seed-advice #seed-cards{height:68px}.seed-card{height:68px;min-height:68px;grid-template-rows:27px 14px 17px}
+ .seed-inline-traits p{font-size:11px;line-height:1.35}.seed-inline-meta{font-size:9px;line-height:1.35;margin-top:3px}
+}
+@media(max-height:590px) and (orientation:portrait){
+ .game,.game.has-seed-advice{grid-template-rows:70px minmax(0,1fr) 172px 44px}
+ .draft{grid-template-rows:18px 60px 90px;gap:2px}.seed-cards,.game.has-seed-advice #seed-cards{height:60px}.seed-card{height:60px;min-height:60px;grid-template-rows:23px 12px 15px;padding:3px}
+ .seed-card .seed-art{height:23px;width:25px}.seed-card .seed-art>.plant-art{width:28px;height:28px}
+ .seed-strategy{padding:4px 7px}.seed-inline-head{margin-bottom:2px}.seed-inline-head strong{font-size:11px}.seed-inline-head span{font-size:9px}.seed-inline-traits p{font-size:11px;line-height:1.3;margin:0}.seed-inline-meta{font-size:9px;line-height:1.3;margin-top:2px}
+ .zoom-seed-inline{padding:4px 7px}.zoom-seed-inline .seed-inline-traits p{font-size:10px;line-height:1.3}.zoom-seed-inline .seed-inline-meta{font-size:8px}
+ dialog[data-mode="upgrade"] .strategy-upgrade{min-height:62px;padding:5px 7px;gap:5px}
+ dialog[data-mode="upgrade"] .strategy-upgrade>span:first-child{width:22px;font-size:20px}
+ dialog[data-mode="upgrade"] .strategy-upgrade .upgrade-effect{font-size:11px;line-height:1.35;margin-top:2px}
+ dialog[data-mode="upgrade"] .strategy-upgrade>b{font-size:15px;min-width:34px}dialog[data-mode="upgrade"] .strategy-upgrade>b small{font-size:8px}
+ dialog[data-mode="upgrade"] .choice-explanation{min-height:66px;padding:5px 7px}.upgrade-preview-numbers{font-size:10px;margin-bottom:3px}.upgrade-preview-numbers b{display:inline;margin-inline-end:4px}.upgrade-preview-reason{font-size:11px;line-height:1.35}
+ dialog[data-mode="upgrade"] .choice-actions{margin-top:5px}dialog[data-mode="upgrade"] .choice-prompt{font-size:10px;margin:6px 0}
+}
