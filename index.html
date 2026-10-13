@@ -6,18 +6,20 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2324553a'/%3E%3Cpath d='M32 49V24M32 35C12 35 13 14 13 14C33 14 32 35 32 35ZM32 29C52 29 51 8 51 8C31 8 32 29 32 29Z' fill='%23f7f0df' stroke='%23f7f0df' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="./styles.css?v=20261013-13">
 <link rel="stylesheet" href="./experience.css?v=20261013-13">
-<link rel="preload" as="image" href="./assets/garden-home-v6.webp">
+<link rel="stylesheet" href="./atelier.css?v=20261013-14.4">
+<link rel="preload" as="image" href="./assets/atelier-v14/greenhouse-home-v14.webp">
 </head>
 <body>
 <main class="app">
+  <div class="atelier-arch" aria-hidden="true"></div>
   <section id="home-screen" class="home-screen" aria-label="햇빛정원 시작 화면">
-    <div class="home-sky"><span class="home-kicker">조금씩 자라는 나만의 작은 세계</span><h1>햇빛<span>정원</span><i aria-hidden="true">✿</i></h1><p>같은 씨앗도, 다른 미래로.<br>이번엔 어떤 정원을 키울까요?</p></div>
+    <div class="home-sky"><span class="home-kicker">SUNLIT GARDEN</span><h1>햇빛<span>정원</span><i aria-hidden="true">✧</i></h1><p>작은 선택이 피어나는 곳.<br>일곱 날, 나만의 정원을 키워요.</p></div>
     <button class="home-visitor" id="home-preview"><span aria-hidden="true">✦</span> 같은 씨앗, 두 가지 진화 ↗</button>
     <div class="home-panel"><div class="home-stats" id="home-stats"></div><button id="home-play" class="primary home-play">정원 열기 <span aria-hidden="true">↗</span></button><div class="home-links"><button id="home-stages"><span aria-hidden="true">⌘</span>정원의 길</button><button id="home-collection"><span aria-hidden="true">✿</span>꾸미기 수첩</button><button id="home-settings"><span aria-hidden="true">☷</span>음악·설정</button></div><button id="home-new-rules" class="new-rules-link" hidden>새 규칙으로 시작 · 세로열 보너스와 높은 목표 ↗</button><button id="home-sound" class="home-sound" aria-pressed="false">♫ 효과음 켜기</button><p class="home-note">서두르지 않아도 괜찮아요. 당신의 속도로.</p></div>
   </section>
   <header class="topbar"><button id="home-button" class="brand stage-button" aria-label="시작 화면" aria-haspopup="dialog"><span class="brand-mark" aria-hidden="true">✿</span><span><span class="brand-title">햇빛정원</span><span id="stage-label" class="brand-sub">1단계 · ∞</span></span></button><div class="header-actions"><button id="stage-button" class="icon-button" aria-label="단계 선택" aria-haspopup="dialog">⌘</button><button id="help" class="icon-button" aria-label="놀이 방법과 식물 도감" aria-haspopup="dialog">?</button><button id="settings" class="icon-button" aria-label="배경음악과 소리 설정" aria-haspopup="dialog">☷</button></div></header>
   <section class="game" aria-label="씨앗을 고르고 정원을 키워요">
-    <div class="journey"><div class="journey-top"><h2><strong id="day">1</strong><span>일째 <small>/ 7</small></span></h2><div class="weather" id="weather"></div><button id="score-button" class="score-button" aria-label="정원 기록 보기" aria-haspopup="dialog"><span aria-hidden="true">✦</span><strong id="score">0</strong><small>햇살</small></button></div><div class="journey-bottom"><div id="days" class="days" aria-label="7일 진행"></div><span id="goal" class="goal"></span></div></div>
+    <div class="journey"><div class="journey-top"><h2><strong id="day">1</strong><span>일째 <small>/ 7</small></span></h2><div class="weather" id="weather"></div><button id="score-button" class="score-button" aria-label="정원 기록 보기" aria-haspopup="dialog"><span aria-hidden="true">✦</span><strong id="score">0</strong><small>햇살</small></button></div><div id="goal-meter" class="goal-meter" role="progressbar" aria-label="정원 목표 달성" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="goal-fill"></span><i aria-hidden="true">✦</i></div><div class="journey-bottom"><div id="days" class="days" aria-label="7일 진행"></div><span id="goal" class="goal"></span></div></div>
     <button id="mission-button" class="mission-strip" aria-haspopup="dialog"><img src="./assets/bunny-guide-v6.webp" alt="" width="48" height="48"><span id="mission-copy"></span><span id="mission-progress"></span></button>
     <div class="board-space" id="board-space"><div class="garden-frame" id="garden-frame"><div class="garden-edge" aria-hidden="true"><span id="board-label">MY LITTLE GARDEN</span><span>✦</span></div><div id="board" class="board" aria-label="정원"></div><div id="zoom-zones" class="zoom-zones" hidden></div><div class="garden-floor" aria-hidden="true"><span id="board-hint">✧　✿　✧</span></div></div><div id="harvest-banner" class="harvest-banner" hidden></div></div>
     <div class="forecast"><span id="forecast-label">오늘 수확 예상</span><strong id="forecast">+0 <small>햇살</small></strong><span id="combos"></span></div>
@@ -31,5 +33,5 @@
 <dialog id="sheet" aria-labelledby="sheet-title"><div class="sheet-heading"><div><p id="sheet-eyebrow" class="eyebrow"></p><h2 id="sheet-title"></h2></div><button id="close-sheet" class="icon-button" aria-label="닫기">×</button></div><div id="sheet-content"></div></dialog>
 <div class="orientation-notice" role="status"><div><span class="phone" aria-hidden="true">✿</span><p class="eyebrow">햇빛정원</p><h2>화면을 세워 주세요</h2><p>세로 화면에서 정원을 이어서 키울 수 있어요.</p></div></div>
 <audio id="garden-bgm" src="./assets/audio/beatwave-bgm.mp3" preload="none" loop playsinline hidden></audio>
-<script type="module" src="./experience-app.mjs?v=20261013-13"></script>
+<script type="module" src="./experience-app.mjs?v=20261013-14.4"></script>
 </body></html>

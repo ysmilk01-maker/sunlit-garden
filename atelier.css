@@ -1,0 +1,156 @@
+/* v14 · The greenhouse. One scene, a stable seed tray, and a legible goal. */
+:root{--forest:#123b31;--forest-deep:#0b2822;--cream:#fff5db;--sun:#f3c96b;--moss:#628568;--ink:#244b3c;--paper:#fff9eb;--ease:cubic-bezier(.2,0,0,1)}
+body{background:radial-gradient(ellipse at 45% 10%,#284c40,#081d18 76%)}
+.app{background:radial-gradient(ellipse at 10% 28%,#385c42 0,transparent 62%),linear-gradient(160deg,#173f35,#0f3029);grid-template-rows:52px minmax(0,1fr) 16px;max-height:1000px;border:0;isolation:isolate}
+.app:before{background:radial-gradient(ellipse at 30% 9%,#ffe9a11b,transparent 44%),radial-gradient(ellipse at 70% 47%,#83aa7117,transparent 60%)}
+.atelier-arch{position:absolute;pointer-events:none;inset:65px 22px 160px;border:1px solid #afd6a419;border-radius:200px 200px 20px 20px;z-index:-1;box-shadow:0 0 0 17px #172f2820,inset 0 0 0 11px #afd6a408}
+.atelier-arch:before,.atelier-arch:after{content:"";position:absolute;left:33%;height:100%;width:1px;background:linear-gradient(transparent,#afd6a419,transparent)}
+.atelier-arch:after{left:66%}
+.topbar{padding:0 14px;background:transparent;border:0;color:#f2ecd2}
+.brand{gap:8px;min-height:44px;color:#f1e9d3;background:transparent}
+.brand-mark{width:30px;height:30px;background:#f2ce79;color:#294633;border-radius:11px;box-shadow:inset 0 1px #fff2bf,0 2px 5px #001c182d;font-size:23px;transform:rotate(-9deg)}
+.brand-title{color:#f5ecd4;font-size:13px;font-weight:800;letter-spacing:-.3px}
+.brand-sub{color:#b0c4a9;font-size:9px;line-height:1.5}
+.header-actions{gap:2px}.topbar .icon-button{color:#c5d6bb;background:#ffffff06;width:44px;height:44px;font-size:18px}
+.topbar .icon-button:hover{background:#ffffff12}.topbar .sound-off{background:#f4cb7117!important;color:#f2cf7b}
+.game,.game.has-seed-advice{grid-template-columns:minmax(0,1fr) 48px;grid-template-rows:79px minmax(0,1fr) 44px 159px 50px;gap:6px 8px;padding:4px 16px 7px;position:relative}
+.journey{grid-area:1/1/2/3;color:#f5ebce;padding:0 2px}
+.journey-top{height:43px;gap:7px}.journey h2>strong{font-size:33px;font-weight:750;letter-spacing:-1.4px;color:#fbefcd}.journey h2>span{font-size:11px;color:#d7dfc4}.journey h2 small{font-size:10px;color:#96b29c}
+.weather{gap:3px;font-size:11px;color:#dce5cb;line-height:1.3}.weather small{color:#9eb79d;font-size:9px}
+.score-button{min-width:100px;height:43px;background:transparent;padding:0;justify-content:flex-end;gap:4px;color:#ffe1a0;border-radius:10px}
+.score-button>span{font-size:19px;color:#f4cb6a}.score-button strong{font-size:30px;font-weight:800;letter-spacing:-1px}.score-button small{font-size:9px;color:#b9cba8;align-self:flex-end;margin-bottom:8px}
+.goal-meter{position:relative;height:6px;border-radius:20px;background:#051f1aa3;box-shadow:inset 0 1px 2px #0003;margin:6px 0 8px;overflow:visible}
+.goal-meter>span{display:block;width:0%;height:100%;background:linear-gradient(90deg,#b9954c,#f5d17a,#fff0b5);border-radius:inherit;box-shadow:0 0 9px #eed17826;transition:width 300ms var(--ease)}
+.goal-meter>i{position:absolute;right:-2px;top:-6px;font-size:14px;font-style:normal;color:#9fa77a}.goal-meter.is-complete>i{color:#ffe9a3;text-shadow:0 0 9px #ffdc7380}
+.journey-bottom{margin:0;min-height:12px;align-items:center}.goal{font-size:10px;color:#e3e8ca;font-variant-numeric:tabular-nums}.days{gap:4px}.day-pip{width:13px;height:4px;background:#507461}.day-pip.done{background:#b7d39a}.day-pip.current{background:#f2cb71;box-shadow:none}
+.board-space{grid-area:2/1/3/3;isolation:isolate;min-height:0;overflow:visible}
+.board-space:before{content:"";position:absolute;inset:15% -8px 5%;border-radius:50%;background:radial-gradient(ellipse,#9eac5520,transparent 68%);z-index:-1}
+.garden-frame{background:linear-gradient(150deg,#be9661 0,#8f693e 12%,#a37a45 60%,#745435);border:1px solid #d9b883;padding:18px 10px 14px;border-radius:23px;box-shadow:inset 0 2px 1px #f0d5a586,inset 0 -3px 0 #5f442c,0 6px 0 #3f3426,0 11px 22px #031a1840}
+.garden-frame:after{inset:5px;border:1px solid #e7cb9452;border-radius:17px}.garden-edge{top:5px;left:16px;right:16px;color:#402e1ce0;font-weight:800;font-size:6px;letter-spacing:1.8px}.garden-floor{bottom:2px;color:#f1dba272;font-size:7px}
+.board,.zoom-grid{gap:4px;background:#3d382a;padding:5px;border-radius:13px;box-shadow:inset 0 2px 8px #1e291b55}
+.plot,.plot.synergy,.plot.evolved{border-radius:10px;background:radial-gradient(ellipse at 45% 28%,#b9ad79,#8c8b5e);border:0;box-shadow:inset 0 1px #e3d3a244,inset 0 -2px #475a344a;outline:none;overflow:visible}
+.plot:before{inset:7px;border:0;background:none;box-shadow:none}.plot:after{pointer-events:none}
+.plot.empty{background:radial-gradient(ellipse,#776b4f,#625940);box-shadow:inset 0 2px 3px #342f2540,inset 0 -1px #bba87629}
+.plot.empty:before{border:1px dashed #c5b58833;border-radius:6px}.plot.empty .empty-plus{color:#baa97d70;font-size:20px;font-weight:300}
+.plot[data-type="well"]{background:radial-gradient(ellipse,#a9ba9e,#6f8c76)}.plot[data-type="hive"]{background:radial-gradient(ellipse,#d4b36c,#a68e53)}
+.plot>.plant-art{width:106%;height:106%;max-width:none;filter:drop-shadow(0 3px 2px #25352245);position:relative;z-index:1;transform-origin:50% 90%}
+.plot>.plant-art.plant-art--age-0:not(.plant-art--hive):not(.plant-art--well){width:88%;height:88%}
+.plot>.plant-art.growing-art{width:86%;height:86%}
+.plot.evolved{box-shadow:inset 0 0 0 1px #dfd57d,inset 0 -2px #67753680;background:radial-gradient(ellipse at 50% 30%,#c5c891,#9ca971)}
+.tile-score{right:3px;bottom:2px;z-index:3;font-size:10px;line-height:1.4;padding:0 4px;border-radius:4px;background:#eee4b5e8;color:#344b31;box-shadow:none;font-weight:800}
+.tile-score.combo{background:#f1d483;color:#4a462a}.age-dots{top:4px;left:4px;z-index:3;gap:2px}.age-dots i{width:3px;height:3px;background:#374c3180}.age-dots i.grown{background:#f6e6a0;box-shadow:none}
+.evolution-badge{z-index:3;right:3px;top:3px;font-size:10px;color:#fff0a8;text-shadow:0 1px 2px #6c7435}.column-badge{z-index:3;background:transparent;color:#fff5d1;box-shadow:none}
+.plot.available{background:radial-gradient(ellipse,#c1b587,#9a9e6a);outline:1px solid #c8d79987;outline-offset:-1px}.plot.available:before{border-color:#f7e8ba36}
+.plot.available.best{background:radial-gradient(ellipse,#e1d296,#c7ba79);box-shadow:inset 0 0 0 2px #fbe5a0,0 0 12px #f7d37b30;outline:0}
+.preview-label{font-size:7px;top:9px;color:#4b5b37}.preview-score{bottom:8px;color:#294b35;font-size:18px;letter-spacing:-.6px}.plot.preview-loss .preview-score{color:#803d2a}
+.plot.evolution-ready{outline:2px solid #f5d58d;outline-offset:-2px}
+.forecast{grid-area:3/1/4/2;border:0;background:transparent;padding:0 4px;gap:7px;color:#bbccab;font-size:10px;flex-wrap:wrap;align-content:center;min-height:44px;line-height:1.15}
+.forecast>strong{font-size:22px;color:#f2d48a}.forecast strong small{color:#a4bca0;font-size:9px}.forecast #combos{font-size:9px;color:#a3bc96;margin-left:auto}
+.mission-strip{grid-area:3/2/4/3;min-height:44px;height:44px;width:48px;min-width:44px;display:grid;place-items:center;padding:0;background:#ffffff0c;border:1px solid #abc29730;border-radius:14px;box-shadow:none;position:relative;overflow:hidden}
+.mission-strip>img{height:40px;width:40px;object-fit:contain}.mission-strip #mission-copy,.mission-strip #mission-progress{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.mission-strip.done{background:#f2cd7621;border-color:#dec076}.mission-strip.done:after{content:"✓";position:absolute;right:2px;top:2px;width:13px;height:13px;background:#f6d884;color:#365538;border-radius:50%;font-size:9px;font-weight:800}
+.draft{grid-area:4/1/5/3;display:grid;grid-template-rows:20px 88px 45px;gap:3px;min-height:0;align-content:stretch;color:#f1ead4}
+.draft-heading{padding:0 2px;min-height:0}.draft-heading h3{font-size:12px;font-weight:650;color:#f4eddb}.draft-heading>span{font-size:10px;color:#b9cba9}
+.seed-cards,.game.has-seed-advice #seed-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;min-height:0;height:88px;flex:none}
+.seed-card{height:88px;min-height:0;border:1px solid #c0d0a55c;border-radius:15px;padding:4px 5px 6px;display:flex;flex-direction:column;gap:0;justify-content:center;background:linear-gradient(150deg,#fbf5dc,#e0e8c5);box-shadow:inset 0 1px #fffbed,0 3px 0 #04271d6e;overflow:visible;transition:transform 130ms var(--ease),background-color 130ms var(--ease),box-shadow 130ms var(--ease)}
+.seed-art{width:100%;height:51px;display:grid;place-items:center;line-height:0}.seed-card .seed-art>.plant-art{width:58px;height:58px;max-width:90%;object-fit:contain;filter:drop-shadow(0 2px 1px #394b2930);flex:none}
+.seed-copy{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;max-width:100%}.seed-card strong{font-size:12px;line-height:1.2;color:#254f3c;font-weight:800;white-space:nowrap}.seed-card small{font-size:9px;line-height:1.2;color:#586b48;white-space:nowrap;letter-spacing:-.2px}
+.seed-card[aria-pressed="true"]{border:1px solid #fee59a;background:linear-gradient(150deg,#ffedb4,#dfdb94);outline:0;box-shadow:inset 0 0 0 1px #fff0b8,0 0 0 2px #d8bf6c7a,0 5px 10px #031e1855;transform:translateY(-3px)}
+.seed-card[aria-pressed="true"]:after{background:#325c40;color:#ffeab0;top:5px;right:5px;width:15px;height:15px;font-size:9px}
+.seed-strategy{grid-row:3;margin:0;background:transparent;border:0;border-radius:0;padding:0 2px;min-height:44px;display:flex;align-items:center;gap:8px;color:#e7e8ca}
+.seed-strategy>.seed-summary-copy{display:block;flex:1;min-width:0}.seed-summary-copy strong{color:#f7d68c;font-size:10px}.seed-summary-copy p{font-size:10px;line-height:1.35;color:#c6d4b7;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.seed-strategy .strategy-more{flex:none;min-width:60px;min-height:44px;font-size:10px;padding:0 7px;border-radius:10px;background:#ffffff0b;color:#d9e4c3;text-decoration:none;line-height:1.3}
+.tip{grid-row:3;align-self:center;text-align:center;font-size:10px;color:#a8c0a3;line-height:1.45;margin:0;padding:4px}
+.ready-card{grid-row:2/4;min-height:0;padding:12px;border-radius:16px;background:#ffffff08;border:1px solid #cdd8a537;color:#edebd0;box-shadow:none;display:flex;align-items:center;gap:12px}.ready-card>span{color:#eed284;font-size:28px}.ready-card strong{color:#f8e5ae;font-size:14px}.ready-card p{color:#b6cbae;font-size:11px;line-height:1.55;margin-top:5px}
+.actions{grid-area:5/1/6/3;display:grid;grid-template-columns:57px minmax(0,1fr);gap:8px;padding:0}
+.actions>.secondary{min-height:48px;background:#ffffff0d;border:1px solid #aabf982e;color:#bfd1b2;border-radius:14px;padding:0;display:grid;place-items:center;font-size:9px;gap:0}
+.actions>.secondary svg{height:16px;width:16px;margin:4px auto 0}.actions>.secondary>span{font-size:8px;align-self:start}
+.actions>.primary{min-height:48px;border-radius:15px;background:linear-gradient(130deg,#f9dc91,#e8b757);color:#294735;box-shadow:inset 0 1px #fff3c0,0 3px 0 #866a30;font-size:14px;font-weight:850;letter-spacing:-.3px}
+.actions>.primary:disabled{background:#b9c3a01a;color:#8cae92;box-shadow:inset 0 0 0 1px #afc89723;opacity:1;font-size:12px}
+.actions>.secondary:disabled{opacity:.4}.app>footer{font-size:8px;color:#9bb697;letter-spacing:.3px;line-height:16px;padding:0;text-align:center}
+/* Home: let the miniature garden occupy the frame, without a pale veil. */
+.home-screen{background:#13392e url('./assets/atelier-v14/greenhouse-home-v14.webp') center 47%/cover;align-items:stretch}
+.home-screen:before{background:linear-gradient(#082a2440,transparent 35%,transparent 49%,#092c2366 65%,#0a2b24ee 88%)}
+.home-sky{margin:76px 0 0;text-align:center;padding:0 20px;color:#fff1cc}
+.home-kicker{font-size:10px;font-weight:600;letter-spacing:4px;color:#d7d9b1}
+.home-sky h1{font-size:70px;font-weight:850;letter-spacing:-5px;line-height:1.08;margin:7px 0 13px;color:#fff0c8;text-shadow:0 3px 0 #5b624735,0 7px 22px #07272066}
+.home-sky h1>span{color:#f2d379}.home-sky h1 i{color:#f6d178;top:-2px;font-size:21px;right:calc(50% - 126px)}
+.home-sky p{font-size:12px;line-height:1.65;letter-spacing:.3px;color:#e6e9ce;text-shadow:0 2px 5px #163326}
+.home-visitor{top:max(16px,env(safe-area-inset-top));left:18px;right:auto;min-height:44px;max-width:calc(100% - 92px);padding:0 11px;border:1px solid #d5d7ad38;border-radius:20px;background:#092c2380;color:#e9ddae;font-size:10px;box-shadow:none;transform:none;backdrop-filter:blur(6px)}
+.home-panel,.home-panel:has(.new-rules-link:not([hidden])){padding:20px 22px max(20px,env(safe-area-inset-bottom))!important;gap:8px;background:linear-gradient(transparent,#0b2e25b3 28%,#0b2e25eb);grid-template-columns:1fr}
+.home-stats{gap:19px;color:#b9c7a7;font-size:9px}.home-stats strong{color:#efd49d;font-size:12px;margin-left:4px}
+.home-play{background:linear-gradient(145deg,#ffe6a1,#ecc169);border:1px solid #f9df9c;box-shadow:inset 0 1px #fff3cf,0 4px 0 #927135,0 10px 23px #041c1744;border-radius:19px;min-height:58px;color:#224a35;padding:0 20px;font-size:16px}
+.home-play small{font-size:10px;color:#607047}.home-play>span:last-child{font-size:24px;color:#365237}
+.home-links{gap:7px}.home-links button{background:#d2dfb50c;border:1px solid #b2c69229;box-shadow:none;border-radius:12px;min-height:46px;flex-direction:row;gap:6px;color:#d5dfbf;font-size:10px}.home-links button>span{color:#c6d2a6;font-size:18px}
+.home-note{color:#a7bf9d;font-size:9px;letter-spacing:.5px;display:block}
+.new-rules-link{min-height:44px;background:#244839b8;border:1px solid #d0d6a53b;color:#d7dfb9;font-size:10px;border-radius:11px}
+.home-sound{position:fixed;top:max(16px,env(safe-area-inset-top));right:max(18px,calc((100vw - 464px)/2 + 18px));width:44px;height:44px;min-height:44px;font-size:0;border:1px solid #d7dda134;background:#12382fa3;border-radius:50%;color:#d4e0bc;z-index:3}
+.home-sound:before{content:"♫";font-size:20px}.home-sound[aria-pressed="false"]{background:#12382fa3;color:#92ae95}.home-sound[aria-pressed="false"]:after{content:"";position:absolute;left:12px;top:21px;width:21px;height:1px;background:#9eb28e;transform:rotate(-45deg)}
+/* Shared sheets are pages from a botanical field book. */
+dialog{background:linear-gradient(145deg,#fffcf1,#f4f0dc);border:1px solid #ebe5c8;border-radius:24px;box-shadow:0 25px 90px #001e16a8;padding:20px;max-width:420px;color:#274c3b}
+dialog::backdrop{background:#041e17a6;backdrop-filter:blur(8px)}
+.sheet-heading h2{color:#254a37;letter-spacing:-.7px;font-weight:800}.eyebrow{color:#899564;letter-spacing:1.6px}.sheet-heading .icon-button{background:#e6e8cd;color:#687959}
+dialog .primary{background:linear-gradient(130deg,#326747,#1e4936);color:#fff1c9;border-radius:13px;box-shadow:inset 0 1px #8cac7155,0 2px 0 #123728}
+dialog .secondary{background:#e9ecd7;border-color:#cbd1b1;color:#466448;border-radius:12px}
+.strategy-evolutions{gap:10px;margin:10px 0}.strategy-evolution{background:radial-gradient(ellipse at 50% 25%,#fffff4,#e5ebd0);border:1px solid #cdd7b1;border-radius:18px;min-height:139px;padding:6px 7px 10px;box-shadow:0 3px 0 #c8ceb28c}
+.strategy-evolution>.plant-art{width:90px;height:90px}.strategy-evolution strong{font-size:13px}.strategy-evolution small{font-size:10px;color:#65784f}
+.strategy-evolution[aria-pressed="true"]{background:radial-gradient(ellipse at 50% 25%,#fff8d8,#dbdea5);border:1px solid #ab9347;box-shadow:inset 0 0 0 1px #d8c079,0 3px 0 #b1a069}
+.evolution-example>div{background:radial-gradient(ellipse at 50% 30%,#fffff4,#e2e9cf);border:1px solid #cbd5b0;border-radius:18px;padding:10px 7px}.evolution-example :is(svg,img.plant-art){width:102px;height:102px}.evolution-example strong{font-size:12px}.evolution-example small{font-size:10px}
+.choice-explanation{border:1px solid #dedfc5;background:#fffdf3;border-radius:14px}.choice-prompt{font-size:12px}.evolution-picker{background:#e7ebd4;border-radius:14px}
+.tile-detail-art{width:125px;height:125px;background:radial-gradient(ellipse,#e5ebc8,transparent 70%)}
+.result-postcard{background:linear-gradient(155deg,#1b4837,#103728);border:1px solid #6b8350;box-shadow:0 4px 0 #092f2360;padding:13px;gap:14px;color:#f2e8bd}
+.result-postcard .mini-garden{width:145px;border:3px solid #b49760;border-radius:13px;background:#746044;box-shadow:0 4px 9px #00180f45}
+.result-postcard .mini-garden>span{background:#94a576;border-radius:4px}.result-postcard-copy>small{color:#b7c68f}.result-postcard-copy>strong{color:#f5e3b1;font-size:14px}.result-postcard-copy>span{color:#bacda6}
+.zoom-grid .plot>.plant-art{width:103%;height:103%}.zoom-cards .seed-card{height:68px;min-height:68px;padding:3px}.zoom-cards .seed-art{height:37px}.zoom-cards .seed-card .seed-art>.plant-art{width:40px;height:40px}.zoom-cards .seed-card strong{font-size:11px}.zoom-cards .seed-card small{font-size:8px}
+.harvest-banner{background:#173f30ed;border:1px solid #edd17a77;border-radius:20px;padding:12px 18px;inset:auto 12% 16%;color:#fff0bb;font-size:20px;box-shadow:0 10px 25px #001d174d}
+.garden-frame{transition:box-shadow 180ms var(--ease)}
+.garden-frame.harvest-celebration{box-shadow:inset 0 1px #ffe1a8,0 6px 0 #725628,0 0 28px #ffd97270}
+@media(max-height:740px) and (orientation:portrait){
+ .app{grid-template-rows:46px minmax(0,1fr) 12px}.topbar{padding-inline:12px}.app>footer{font-size:7px;line-height:12px}
+ .game,.game.has-seed-advice{grid-template-rows:68px minmax(0,1fr) 44px 141px 46px;gap:4px 7px;padding:2px 13px 5px}
+ .journey-top{height:36px}.journey h2>strong{font-size:28px}.score-button{height:36px}.score-button strong{font-size:27px}.score-button small{margin-bottom:5px}.goal-meter{height:5px;margin:5px 0 8px}.goal{font-size:9px}
+ .draft{grid-template-rows:17px 78px 42px;gap:2px}.seed-cards,.game.has-seed-advice #seed-cards{height:78px}.seed-card{height:78px}.seed-art{height:43px}.seed-card .seed-art>.plant-art{width:50px;height:50px}.seed-card strong{font-size:11px}.seed-card small{font-size:8px}
+ .seed-strategy{min-height:42px}.seed-summary-copy p{font-size:9px}.seed-summary-copy strong{font-size:9px}.tip{font-size:9px}.forecast>strong{font-size:20px}.forecast #combos{font-size:8px}
+ .actions>.primary,.actions>.secondary{min-height:44px}.actions>.primary{font-size:13px}
+ .home-sky{margin-top:65px}.home-sky h1{font-size:57px;margin:5px 0 9px}.home-sky p{font-size:11px}.home-sky h1 i{right:calc(50% - 111px)}
+ .home-panel,.home-panel:has(.new-rules-link:not([hidden])){padding:18px 18px max(14px,env(safe-area-inset-bottom))!important;gap:7px}.home-play{min-height:52px;font-size:15px}.home-links button{min-height:44px}.home-note{display:none}.home-stats{font-size:8px}
+ .strategy-evolution{min-height:106px;padding:4px 5px 7px}.strategy-evolution>.plant-art{width:61px;height:61px}.strategy-evolution strong{font-size:12px}.strategy-evolution small{font-size:10px}.strategy-evolutions{gap:8px;margin:8px 0}
+ .evolution-example :is(svg,img.plant-art){height:88px;width:88px}.evolution-example{margin-bottom:12px}.evolution-example>div{padding:7px 4px}
+ .result-postcard{padding:8px;gap:10px}.result-postcard .mini-garden{width:120px}.result-postcard-copy>strong{font-size:12px}.tile-detail-art{width:100px;height:100px}
+}
+@media(max-height:590px) and (orientation:portrait){
+ .game,.game.has-seed-advice{grid-template-rows:60px minmax(0,1fr) 44px 125px 44px;gap:3px 6px;padding:0 11px 4px}.app{grid-template-rows:44px minmax(0,1fr) 10px}
+ .journey-top{height:31px}.journey h2>strong{font-size:25px}.weather{font-size:10px}.score-button{height:32px}.score-button strong{font-size:24px}.goal-meter{margin-top:3px;margin-bottom:7px}.journey-bottom{min-height:10px}.day-pip{width:10px}
+ .draft{grid-template-rows:16px 67px 38px;gap:2px}.seed-cards,.game.has-seed-advice #seed-cards{height:67px;gap:6px}.seed-card{height:67px;border-radius:12px;padding:3px}.seed-art{height:35px}.seed-card .seed-art>.plant-art{width:42px;height:42px}.seed-copy{gap:1px}.seed-card strong{font-size:10px}.seed-card small{font-size:8px}
+ .seed-strategy{min-height:38px;padding:0 1px}.seed-strategy .strategy-more{min-height:44px;min-width:54px;padding:0 5px}.seed-summary-copy p{-webkit-line-clamp:1;font-size:9px}.seed-summary-copy strong{font-size:9px}.tip{font-size:9px}
+ .garden-frame{padding:16px 8px 12px;border-radius:20px}.board{gap:3px;padding:4px}.tile-score{font-size:9px}.plot{border-radius:8px}.preview-score{font-size:16px}.preview-label{font-size:6px;top:7px}.preview-score{bottom:6px}
+ .home-sky{margin-top:65px}.home-sky h1{font-size:49px;margin:3px 0 7px}.home-kicker{font-size:8px;letter-spacing:3px}.home-sky p{font-size:10px}.home-sky h1 i{right:calc(50% - 97px)}
+ .home-panel,.home-panel:has(.new-rules-link:not([hidden])){gap:6px;padding-top:13px!important}.home-play{min-height:48px;font-size:14px}.home-links button{font-size:9px;gap:4px}.home-links button>span{font-size:15px}
+ .evolution-example :is(svg,img.plant-art){width:72px;height:72px}.strategy-evolution{min-height:96px}.strategy-evolution>.plant-art{width:51px;height:51px}.strategy-evolutions{margin:6px 0}.choice-explanation .strategy-lines p{font-size:11px;line-height:1.35;margin:5px 0}
+ .result-postcard .mini-garden{width:99px}.result-postcard-copy>strong{font-size:11px}
+}
+@media(min-width:600px) and (min-height:650px){.app{height:min(940px,calc(100dvh - 32px));border-radius:30px;box-shadow:0 20px 100px #0007,0 0 0 1px #92b08033}}
+@media(prefers-reduced-motion:reduce){.goal-meter>span,.seed-card{transition:none}.seed-card[aria-pressed="true"]{transform:none}}
+:is(.board,.zoom-grid) .plot:focus-visible{outline:3px solid #fff0b6;outline-offset:2px;z-index:5}
+.goal-meter.achieved>i{color:#ffe9a3;text-shadow:0 0 9px #ffdc7380}
+.harvest-reward-note{margin:0 0 8px;padding:6px 9px;border-radius:9px;background:#f3e4b9;color:#766130;font-size:10px;line-height:1.4}
+.mission-strip:before{content:"소식";position:absolute;right:2px;bottom:2px;padding:1px 3px;border-radius:4px;background:#183d2fe8;color:#ead9a2;font-size:7px}
+.seedling-name{position:absolute;top:3px;left:2px;right:2px;z-index:3;color:#e8e3bb;font-size:8px;line-height:1.3;text-align:center;font-weight:650;pointer-events:none;text-shadow:0 1px #3c4d38}
+.has-seedling .age-dots,.garden-frame.overview .seedling-name{display:none}
+@media(max-height:590px) and (orientation:portrait){.seedling-name{font-size:7px}}
+/* Keep focus targets inside the viewport, including small iPhones. */
+.score-button{height:44px;min-height:44px}
+.board{padding:0}
+.seed-summary-value{margin-left:5px;color:#ffe9ad}
+.goal.achieved{color:#f8db8b}
+@media(max-height:590px) and (orientation:portrait){
+ .game,.game.has-seed-advice{grid-template-rows:70px minmax(0,1fr) 44px 125px 44px;gap:2px 6px}
+ .journey-top{height:44px}.goal-meter{margin-top:1px;margin-bottom:5px}
+ .garden-frame{padding-top:14px;padding-bottom:6px}.garden-floor{bottom:0;font-size:5px}
+ .app>footer{line-height:10px}
+ dialog[data-mode="upgrade"] .strategy-upgrades{gap:5px;margin-bottom:5px}
+ dialog[data-mode="upgrade"] .strategy-upgrade{min-height:48px;padding:4px 8px}
+ dialog[data-mode="upgrade"] .strategy-upgrade strong{font-size:12px}
+ dialog[data-mode="upgrade"] .strategy-upgrade small{font-size:9px;margin-top:2px}
+ dialog[data-mode="upgrade"] .advice-assumption{margin:5px 0;font-size:9px}
+ dialog[data-mode="upgrade"] .strategy-reroll{margin-top:3px}
+}

@@ -12,10 +12,29 @@ const SPRITES = Object.freeze({
   'evo-lucky': Object.freeze({ type: 'clover', evolution: 'lucky' }),
   'evo-swarm': Object.freeze({ type: 'hive', evolution: 'swarm' }),
   'evo-royal': Object.freeze({ type: 'hive', evolution: 'royal' }),
+  'base-berry': Object.freeze({ type: 'berry', version: 14 }),
+  'base-lavender': Object.freeze({ type: 'lavender', version: 14 }),
+  'base-mushroom': Object.freeze({ type: 'mushroom', version: 14 }),
+  'base-well': Object.freeze({ type: 'well', version: 14 }),
+  'evo-cluster': Object.freeze({ type: 'berry', evolution: 'cluster', version: 14 }),
+  'evo-jam': Object.freeze({ type: 'berry', evolution: 'jam', version: 14 }),
+  'evo-chorus': Object.freeze({ type: 'lavender', evolution: 'chorus', version: 14 }),
+  'evo-perfume': Object.freeze({ type: 'lavender', evolution: 'perfume', version: 14 }),
+  'evo-colony': Object.freeze({ type: 'mushroom', evolution: 'colony', version: 14 }),
+  'evo-moon': Object.freeze({ type: 'mushroom', evolution: 'moon', version: 14 }),
+  // Separate allowlisted identities retain the exact SVG fallback for one shared bitmap.
+  'sprout-sunflower': Object.freeze({ type: 'sunflower', asset: 'shared-sprout', seedling: true, version: 14 }),
+  'sprout-clover': Object.freeze({ type: 'clover', asset: 'shared-sprout', seedling: true, version: 14 }),
+  'sprout-berry': Object.freeze({ type: 'berry', asset: 'shared-sprout', seedling: true, version: 14 }),
+  'sprout-lavender': Object.freeze({ type: 'lavender', asset: 'shared-sprout', seedling: true, version: 14 }),
+  'sprout-mushroom': Object.freeze({ type: 'mushroom', asset: 'shared-sprout', seedling: true, version: 14 }),
 });
 const installations = new WeakMap();
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
-const assetUrl = key => `./assets/plants-v13/${key}-v13.webp`;
+const assetUrl = key => {
+  const record = SPRITES[key], version = record.version || 13;
+  return `./assets/${version === 14 ? 'atelier-v14' : 'plants-v13'}/${record.asset || key}-v${version}.webp`;
+};
 const normalizedType = type => typeof type === 'string' ? type : '';
 function normalizedAge(age) {
   let number;
@@ -23,20 +42,23 @@ function normalizedAge(age) {
   return Math.max(0, Math.min(2, Number.isFinite(number) ? Math.floor(number) : 0));
 }
 function eligible(record, age) {
-  // The original hive and its two evolutions have a fixed appearance at every age.
-  return age === 2 || record.type === 'hive';
+  if (record.seedling) return age === 0;
+  return !!record.evolution || record.type === 'hive' || record.type === 'well' || age > 0;
 }
 function image(key, age, small) {
   const record = SPRITES[key];
   const evolution = record.evolution ? ` evolution-art evolution-art--${record.evolution}` : '';
   const evolutionData = record.evolution ? ` data-evolution="${record.evolution}"` : '';
-  return `<img class="plant-art plant-art--${record.type} plant-art--age-${age}${evolution} garden-sprite" src="${assetUrl(key)}" alt="" aria-hidden="true" width="100" height="100" decoding="async" draggable="false" data-garden-sprite="${key}" data-garden-age="${age}" data-garden-small="${small ? '1' : '0'}"${evolutionData}>`;
+  const growing = age === 1 && record.type !== 'hive' && record.type !== 'well' ? ' growing-art' : '';
+  return `<img class="plant-art plant-art--${record.type} plant-art--age-${age}${evolution} garden-sprite${growing}" src="${assetUrl(key)}" alt="" aria-hidden="true" width="100" height="100" decoding="async" draggable="false" data-garden-sprite="${key}" data-garden-age="${age}" data-garden-small="${small ? '1' : '0'}"${evolutionData}>`;
 }
 
-/** Same decorative-art API; seedlings and growing flowers keep their exact original SVG. */
+/** Organic plants share a seedling image, then use their own growing and adult art. */
 export function plantArt(type, age = 0, options = {}) {
   const safeType = normalizedType(type), stage = normalizedAge(age), small = Boolean(options?.small);
-  const key = `base-${safeType}`, record = own(SPRITES, key) ? SPRITES[key] : null;
+  const seedlingKey = `sprout-${safeType}`;
+  const key = stage === 0 && own(SPRITES, seedlingKey) ? seedlingKey : `base-${safeType}`;
+  const record = own(SPRITES, key) ? SPRITES[key] : null;
   return record && eligible(record, stage) ? image(key, stage, small) : svgPlantArt(safeType, stage, { small });
 }
 
@@ -57,6 +79,7 @@ function restoreSvg(target) {
   const age = target.dataset.gardenAge, size = target.dataset.gardenSmall;
   if (!/^[012]$/.test(age) || !/^[01]$/.test(size)) return false;
   const record = SPRITES[key], options = { small: size === '1' };
+  if (!eligible(record, Number(age))) return false;
   const markup = record.evolution
     ? svgEvolutionArt(record.type, record.evolution, Number(age), options)
     : svgPlantArt(record.type, Number(age), options);
