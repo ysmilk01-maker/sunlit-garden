@@ -1,15 +1,15 @@
 import {SEEDS,UPGRADES,WEATHER,STAGES,RUN_DAYS,newRun,stageFor,picksToday,plant,undo,forecast,harvest,chooseUpgrade,rerollUpgrades,rerollsRemaining,loadRun,saveRun,loadCampaign,saveCampaign,recordResult,canPlay} from './evolution-core.mjs?v=20261013-11';
 import {EVOLUTIONS,evolutionChoices,evolvableTiles,evolve as chooseEvolution,previewEvolution} from './evolution-core.mjs?v=20261013-11';
-import {evolutionArt} from './evolution-art.mjs?v=20261013-11';
+import {plantArt,evolutionArt,installSpriteFallbacks} from './garden-sprites.mjs?v=20261013-13';
 import {createGardenAudio} from './garden-audio.mjs?v=20261013-12';
 import {seedAdvice,upgradeAdvice,evolutionAdvice} from './garden-strategy.mjs?v=20261013-12';
-import {createGardenFeedback} from './garden-feedback.mjs?v=20261013-11';
-import {plantArt} from './garden-art.mjs?v=20261013-8';
+import {createGardenFeedback} from './garden-feedback.mjs?v=20261013-13';
 import {DECORATIONS,loadProfile,saveProfile,missionFor,claimHarvest,claimClear,reconcileCampaign,starsFor,summaryFor,selectDecoration,setOptions} from './garden-features.mjs?v=20261013-11';
 import {createGardenMusic} from './garden-music.mjs?v=20261013-7';
 import * as LEGACY from './campaign-legacy-v7.mjs';
 import * as LEGACY8 from './campaign-legacy-v8.mjs';
 const $=id=>document.getElementById(id);
+installSpriteFallbacks(document);
 let storage;try{storage=window.localStorage;}catch{}
 let profile=loadProfile(storage).profile;
 let homeVisible=true,lastMissionReward=0,lastClearReward=0,lastDecorUnlocks=[];

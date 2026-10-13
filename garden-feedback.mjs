@@ -8,7 +8,7 @@ export function createGardenFeedback({ reduced, hidden = () => document.hidden }
     effect.layer?.remove(); effect.cell?.classList.remove('just-planted', 'just-evolved');
   }
   function play(cell, kind = 'plant', type = '') {
-    clear(); const image = cell?.querySelector('svg');
+    clear(); const image = cell?.querySelector('.plant-art') || cell?.querySelector('svg');
     if (!image?.animate || hidden()) return;
     const effect = { cell, layer: null, animations: [] }; active = effect;
     cell.classList.add(kind === 'evolve' ? 'just-evolved' : 'just-planted');
