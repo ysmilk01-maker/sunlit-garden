@@ -58,6 +58,14 @@ function sourcePosition() {
   $('sun-source').style.left = `${position(level.source.x)}px`;
   $('sun-source').style.top = `${position(level.source.y)}px`;
 }
+function fitBoard() {
+  const wrap = $('board-wrap');
+  const style = getComputedStyle(wrap);
+  const availableHeight = wrap.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+  const size = Math.floor(Math.min(wrap.clientWidth, availableHeight, 412));
+  $('board-frame').style.setProperty('--board-size', `${Math.max(0, size)}px`);
+  sourcePosition();
+}
 function render(focusMirror = null) {
   const result = trace(level, angles);
   if (result.complete && !progress.completed.includes(level.id)) progress.completed.push(level.id);
@@ -118,6 +126,7 @@ function render(focusMirror = null) {
   $('undo').disabled = history.length === 0;
   $('hint').disabled = result.complete;
   $('success').hidden = !result.complete;
+  $('play-status').hidden = result.complete;
   const isFinal = level.id === LEVELS.length;
   $('success-title').textContent = isFinal ? '정원마다, 꼭 맞는 햇살.' : '햇살이 닿았어요.';
   $('success-copy').textContent = isFinal ? `${progress.completed.length}개의 정원을 완성했어요. 다른 창가도 들러 보세요.` : '오늘의 초록이 조금 더 자랐네요.';
@@ -156,12 +165,17 @@ $('sound').addEventListener('click', async () => {
 });
 $('undo').addEventListener('click', () => { if (!history.length) return; angles = history.pop(); hintIndex = null; render(); announce('마지막 회전을 되돌렸어요.'); });
 $('restart').addEventListener('click', () => { angles = initialAngles(level); history = []; hintIndex = null; render(); announce('이 정원을 처음 상태로 되돌렸어요. 완료 기록은 유지돼요.'); });
-$('hint').addEventListener('click', () => { hintIndex = level.mirrors.findIndex((mirror, index) => mirror.solution !== angles[index]); render(); announce('노란 테두리의 거울을 한 번 돌려 보세요.'); if (hintIndex >= 0) $('board').querySelector(`[data-mirror="${hintIndex}"]`).focus(); });
+$('hint').addEventListener('click', () => { hintIndex = level.mirrors.findIndex((mirror, index) => mirror.solution !== angles[index]); render(); announce('노란 테두리의 거울을 한 번 돌려 보세요.'); if (hintIndex >= 0) $('board').querySelector(`[data-mirror="${hintIndex}"]`).focus({ preventScroll: true }); });
 $('next').addEventListener('click', () => { if (progress.current < LEVELS.length - 1) { goTo(progress.current + 1); $('choose-level').focus(); } else showLevels(); });
 $('choose-level').addEventListener('click', showLevels);
 $('close-dialog').addEventListener('click', () => $('level-dialog').close());
+$('help').addEventListener('click', () => $('help-dialog').showModal());
+$('close-help').addEventListener('click', () => $('help-dialog').close());
+$('help-dialog').addEventListener('click', event => { if (event.target === $('help-dialog')) { const rect = $('help-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('help-dialog').close(); } });
 $('level-dialog').addEventListener('click', event => { if (event.target === $('level-dialog')) { const rect = $('level-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('level-dialog').close(); } });
-if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sourcePosition).observe($('board-frame'));
-else window.addEventListener('resize', sourcePosition);
-drawSound(); render();
+if (typeof ResizeObserver !== 'undefined') {
+  new ResizeObserver(sourcePosition).observe($('board-frame'));
+  new ResizeObserver(fitBoard).observe($('board-wrap'));
+} else window.addEventListener('resize', fitBoard);
+drawSound(); render(); fitBoard();
 if (!restored.available) $('storage-note').textContent = '이전 저장을 읽지 못해 새 정원으로 시작했어요. 저장이 가능하면 다음 조작부터 기록됩니다.';
