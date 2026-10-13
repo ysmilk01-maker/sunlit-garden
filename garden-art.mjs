@@ -1,6 +1,6 @@
 // Original, self-contained garden illustrations. No fonts, images, IDs, or network requests.
 // Keep the outer SVG decorative: the containing control supplies its accessible name.
-const TYPES = new Set(['sunflower', 'clover', 'lavender', 'berry', 'mushroom', 'hive', 'well', 'mint', 'tulip', 'fern', 'pumpkin', 'rose', 'lotus']);
+const TYPES = new Set(['sunflower', 'clover', 'lavender', 'berry', 'mushroom', 'hive', 'well', 'mint', 'tulip', 'fern', 'pumpkin', 'rose', 'lotus', 'daisy', 'bluebell', 'strawberry', 'bamboo', 'cactus', 'hydrangea', 'orchid', 'cherry']);
 const ellipse = (cx, cy, rx, ry, fill, extra = '') => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" ${extra}/>`;
 const path = (d, fill, extra = '') => `<path d="${d}" fill="${fill}" ${extra}/>`;
 const stem = (d, width = 6, color = '#397c4c') => `<path d="${d}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linecap="round"/>`;
@@ -178,6 +178,144 @@ function lotus(age, small) {
     + (small ? '' : ellipse(48, 60, 3, 1.5, '#fff0b4'));
 }
 
+function daisyFlower(x, y, scale, small) {
+  const petals = Array.from({ length: 9 }, (_, i) => `<g transform="rotate(${i * 40})">${ellipse(0, -12, 4.8, 10, i % 2 ? '#fff9e9' : '#ffffff')}</g>`).join('');
+  return `<g transform="translate(${x} ${y}) scale(${scale})">${petals}${ellipse(0, 2, 8, 7, '#d8a240')}${ellipse(0, 0, 7, 6, '#f3ca58')}${small ? '' : ellipse(-2, -2, 2.5, 2, '#fff0a3')}</g>`;
+}
+
+function daisy(age, small) {
+  if (age === 0) return ground(small) + stem('M50 84Q48 71 50 63', 4)
+    + leaf(49, 78, false, '#9bc77d') + leaf(50, 72, true, '#b0d28c') + ellipse(50, 61, 4, 5, '#f5ebc7');
+  let result = ground(small) + stem('M49 84Q53 63 49 36', 4, '#5a9256')
+    + stem('M50 76Q32 66 26 57', 3, '#5a9256') + stem('M51 70Q68 59 74 48', 3, '#5a9256')
+    + leaf(49, 81, false, '#a0c982') + leaf(52, 75, true, '#b4d58d');
+  if (age === 1) return result + daisyFlower(49, 41, .64, small)
+    + ellipse(26, 56, 5, 7, '#e8e7c4') + ellipse(74, 47, 5, 7, '#fff3d0');
+  return result + daisyFlower(49, 33, 1, small) + daisyFlower(25, 57, .64, small) + daisyFlower(76, 48, .67, small);
+}
+
+function bluebellFlower(x, y, scale, angle, small) {
+  return `<g transform="translate(${x} ${y}) rotate(${angle}) scale(${scale})">${path('M-8-5Q-8-16 0-17Q9-16 9-5Q10 6 16 10Q10 16 6 11Q0 17-5 11Q-11 16-16 10Q-10 4-8-5Z', '#5b75b4')}${path('M-5-9Q-4-14 1-14Q7-12 5-4L8 9Q3 12 0 9L-5 11Q-9 6-7 0Z', '#8db8e6')}${path('M-8-11L0-19L9-10L4-10L0-13L-3-9Z', '#629171')}${ellipse(0, 10, 8, 2.5, '#4868a3')}${small ? '' : stem('M-1-9L-2 3', 2, '#c7e4f4')}</g>`;
+}
+
+function bluebell(age, small) {
+  let result = ground(small) + path(age === 0 ? 'M48 85Q30 72 35 63Q50 71 48 85M52 85Q62 65 70 62Q70 80 52 85Z' : 'M47 86Q18 73 20 54Q45 67 47 86M53 86Q66 61 83 54Q79 77 53 86Z', '#5b9b7c');
+  if (age === 0) return result + stem('M50 83Q50 70 54 65', 3, '#559278') + ellipse(55, 63, 4, 6, '#a4c3dd');
+  result += stem(age === 1 ? 'M48 84Q51 37 61 42' : 'M47 84Q49 23 61 21', 4, '#528c77');
+  if (age === 1) return result + bluebellFlower(62, 49, .75, -10, small) + ellipse(50, 61, 5, 7, '#80a3d0');
+  return result + stem('M52 36Q33 34 31 42M50 54Q67 48 74 56', 3, '#528c77')
+    + bluebellFlower(61, 30, .84, -8, small) + bluebellFlower(30, 51, .83, 15, small) + bluebellFlower(74, 63, .78, -13, small);
+}
+
+function strawberryLeaf(x, y, angle, scale) {
+  return `<g transform="translate(${x} ${y}) rotate(${angle}) scale(${scale})">${path('M0 4L-9-1L-7-5L-15-8L-11-12L-16-17L-10-20L-11-25L-4-27L0-31L6-28L7-23L14-21L11-16L16-12L10-8L12-3L4 0Z', '#397f52')}${path('M0 1Q-11-13-2-26Q10-14 0 1Z', '#8abc72')}${stem('M0 1L-1-23', 1.8, '#c1d799')}</g>`;
+}
+
+function strawberryFruit(x, y, scale, small) {
+  let result = path('M-16-8Q-16-21 0-17Q16-21 16-8Q14 7 0 17Q-14 7-16-8Z', '#be4d4d')
+    + path('M-12-10Q-9-20 1-14Q10-18 12-9Q10 4-1 13Q-12 3-12-10Z', '#ed7d69')
+    + path('M0-15L-13-19L-8-12L-15-8L-5-8L0-2L4-9L14-7L9-13L13-18L3-16L0-23Z', '#559359');
+  for (const [x, y] of [[-7, -5], [5, -6], [-2, 2], [5, 3], [-1, 9]]) result += ellipse(x, y, 1.3, 2, '#ffe4a3', 'transform="rotate(-15)"');
+  if (!small) result += ellipse(-7, -9, 2, 3, '#ffc0a6');
+  return `<g transform="translate(${x} ${y}) scale(${scale})">${result}</g>`;
+}
+
+function strawberry(age, small) {
+  let result = ground(small) + stem('M50 84Q49 69 50 57', 4, '#53955d');
+  if (age === 0) return result + strawberryLeaf(49, 75, -48, .5) + strawberryLeaf(51, 72, 43, .52);
+  result += strawberryLeaf(50, 63, -52, .99) + strawberryLeaf(49, 59, 0, 1.02) + strawberryLeaf(54, 63, 54, .98)
+    + stem('M49 67Q29 61 26 72M54 67Q72 63 76 74', 3, '#658c58');
+  if (age === 1) return result + daisyFlower(49, 63, .38, small) + ellipse(27, 74, 6, 8, '#b4c989') + ellipse(74, 75, 5, 6, '#d4d69e');
+  return result + strawberryFruit(28, 72, .68, small) + strawberryFruit(75, 75, .66, small) + strawberryFruit(51, 70, 1.05, small);
+}
+
+function bambooStalk(x, top, width, small) {
+  let result = path(`M${x - width / 2} 85V${top + 5}Q${x} ${top - 3} ${x + width / 2} ${top + 5}V85Z`, '#48854f')
+    + path(`M${x - width / 2 + 2} 84V${top + 6}Q${x - 1} ${top + 1} ${x + 1} ${top + 5}V84Z`, '#9bbc63');
+  for (let y = top + 16; y < 84; y += 17) result += stem(`M${x - width / 2 - 1} ${y}H${x + width / 2 + 1}`, 2.5, '#c1d090');
+  if (!small) result += stem(`M${x - width / 2 + 3} ${top + 8}V81`, 1, '#d1dda1');
+  return result;
+}
+
+function bambooLeaves(x, y, flip = false, scale = 1) {
+  return `<g transform="translate(${x} ${y}) scale(${flip ? -scale : scale} ${scale})">${stem('M0 0Q12-7 27-12', 2, '#3d8056')}${path('M9-5Q6-21 11-24Q16-15 9-5M14-7Q25-23 31-23Q30-11 14-7M18-8Q33-11 38-4Q26-1 18-8Z', '#70a668')}${path('M5-3Q11 0 17 12Q5 10 5-3Z', '#97be76')}</g>`;
+}
+
+function bamboo(age, small) {
+  if (age === 0) return ground(small) + path('M40 84Q43 60 51 48Q60 63 61 84Z', '#a1b36b')
+    + path('M40 82L55 71L44 67L54 59L50 50Q43 62 40 82Z', '#698d50') + path('M47 81L57 77L47 74Z', '#c2cd89');
+  if (age === 1) return ground(small) + bambooStalk(48, 36, 11, small) + bambooStalk(64, 58, 8, small)
+    + bambooLeaves(50, 50) + bambooLeaves(47, 69, true);
+  return ground(small) + bambooStalk(33, 37, 9, small) + bambooStalk(51, 15, 11, small) + bambooStalk(70, 29, 9, small)
+    + bambooLeaves(50, 31) + bambooLeaves(48, 50, true) + bambooLeaves(67, 64, true) + bambooLeaves(70, 43, false, .65);
+}
+
+function cactus(age, small) {
+  let result = ground(small) + ellipse(49, 85, age === 0 ? 17 : 25, 4, '#c3b17d');
+  if (age === 0) return result + ellipse(50, 75, 11, 13, '#74aa75') + stem('M48 66V83', 2, '#acc98d')
+    + path('M42 72L38 70M59 76L63 74', 'none', 'stroke="#f4e7c0" stroke-width="2" stroke-linecap="round"');
+  const top = age === 1 ? 41 : 22;
+  if (age > 1) result += path('M41 70H30Q18 70 18 57V43Q18 37 24 37Q30 37 30 43V55Q30 58 41 57ZM59 58H70Q83 58 83 45V34Q83 28 77 28Q71 28 71 34V43Q71 47 59 46Z', '#659e6a');
+  result += path(`M35 85V${top + 15}Q35 ${top} 50 ${top}Q65 ${top} 65 ${top + 15}V85Z`, '#639a63')
+    + path(`M41 84V${top + 14}Q41 ${top + 3} 49 ${top + 3}Q55 ${top + 4} 56 ${top + 14}V84Z`, '#91bd78')
+    + stem(`M49 ${top + 8}V81`, 2, '#c0d493');
+  result += path(age === 1 ? 'M39 55L34 53M59 66L64 64M40 75L35 73' : 'M39 39L34 37M60 44L65 42M39 58L34 56M60 66L65 64M25 48L20 46M76 37L81 35M40 77L35 75', 'none', 'stroke="#f6e8bd" stroke-width="2" stroke-linecap="round"');
+  if (age > 1) result += path('M50 25Q32 21 37 11Q43 6 49 17Q48 1 57 5Q65 10 55 19Q70 13 69 23Q63 31 50 25Z', '#db8b9e')
+    + ellipse(51, 22, 5, 4, '#efcd76');
+  else if (!small) result += ellipse(48, 45, 4, 2, '#bed18c');
+  return result;
+}
+
+function hydrangeaFloret(x, y, scale, color) {
+  return `<g transform="translate(${x} ${y}) scale(${scale})">${ellipse(-4, -4, 5, 5, color)}${ellipse(4, -4, 5, 5, color)}${ellipse(-4, 4, 5, 5, color)}${ellipse(4, 4, 5, 5, color)}${ellipse(0, 0, 2, 2, '#f1e7c7')}</g>`;
+}
+
+function hydrangea(age, small) {
+  if (age === 0) return ground(small) + stem('M50 85V64', 4) + strawberryLeaf(48, 77, -50, .55) + strawberryLeaf(52, 73, 47, .58);
+  let result = ground(small) + stem('M50 84V53', 6, '#4b815d')
+    + leaf(48, 80, false, '#75ac81') + leaf(52, 80, true, '#91bb8a')
+    + leaf(46, 75, false, '#6da778');
+  if (age === 1) return result + ellipse(50, 48, 19, 18, '#849fc1')
+    + [[41, 45], [51, 38], [60, 46], [46, 56], [57, 56]].map(([x, y], i) => hydrangeaFloret(x, y, .7, i % 2 ? '#bbc7e5' : '#9ab5dd')).join('');
+  result += ellipse(50, 45, 34, 29, '#7d8ebb');
+  const florets = [[30, 30, .8], [47, 22, .85], [64, 28, .82], [78, 43, .8], [70, 59, .87], [51, 66, .86], [32, 59, .85], [22, 43, .79], [45, 42, 1], [59, 44, .95], [43, 55, .86], [59, 30, .64]];
+  result += florets.map(([x, y, scale], i) => hydrangeaFloret(x, y, scale, ['#bac4e5', '#9abfdf', '#a7aed8', '#c8c8e9'][i % 4])).join('');
+  if (!small) result += ellipse(38, 31, 2, 1.5, '#eef4f3') + ellipse(64, 49, 2, 1.5, '#eef4f3');
+  return result;
+}
+
+function orchidFlower(x, y, scale, small) {
+  return `<g transform="translate(${x} ${y}) scale(${scale})">${path('M0 0Q-14-16-3-24Q7-27 8-15Q8-6 0 0Z', '#e9b7d0')}${path('M-1 1Q-24 5-25-10Q-21-22-9-14Q-3-9-1 1M2 1Q21-20 29-7Q31 7 15 9Q5 7 2 1Z', '#d691b7')}${path('M-4 2Q-18 5-13 17Q-6 23 2 10M5 2Q20 5 17 16Q9 23 2 10', '#f1c7d8')}${path('M-5 0Q1-7 7 0L12 8Q5 24-3 13L-9 7Z', '#a75494')}${path('M-2 2Q2-1 6 3L7 10Q2 15-2 9Z', '#ffe4b1')}${ellipse(2, -1, 3, 3, '#fff4d0')}${small ? '' : path('M-18-11Q-13-12-7-5M15-5L8 0', 'none', 'stroke="#f9d4e2" stroke-width="2" stroke-linecap="round"')}</g>`;
+}
+
+function orchid(age, small) {
+  let result = ground(small) + path(age === 0 ? 'M48 85Q21 79 27 69Q46 67 48 85M51 85Q73 78 75 66Q55 66 51 85Z' : 'M48 85Q12 82 16 65Q39 58 48 85M52 85Q84 85 87 63Q62 55 52 85Z', '#4a8d71')
+    + path(age === 0 ? 'M47 82Q32 75 30 73M53 82Q64 74 70 70' : 'M46 81Q31 68 21 69M55 80Q66 67 81 67', 'none', 'stroke="#8bb998" stroke-width="3" stroke-linecap="round"');
+  if (age === 0) return result;
+  result += stem(age === 1 ? 'M49 83Q42 39 61 37' : 'M49 83Q29 23 51 23Q67 20 74 42', 4, '#618563');
+  if (age === 1) return result + ellipse(61, 38, 7, 10, '#cb92b3') + ellipse(52, 52, 5, 7, '#9fb581');
+  return result + orchidFlower(48, 33, .88, small) + orchidFlower(73, 53, .69, small) + stem('M44 57Q31 54 29 60', 2, '#618563') + ellipse(28, 64, 6, 9, '#d5a2be');
+}
+
+function cherryBlossom(x, y, scale, small) {
+  const petals = Array.from({ length: 5 }, (_, i) => `<g transform="rotate(${i * 72})">${path('M0 1Q-10-3-7-9L-2-12L0-9L3-12Q12-6 0 1Z', i % 2 ? '#ffe4df' : '#fff1e7')}</g>`).join('');
+  return `<g transform="translate(${x} ${y}) scale(${scale})">${petals}${ellipse(0, 0, 2.8, 2.8, '#d58291')}${small ? '' : ellipse(0, -1, 1, 1, '#f4c879')}</g>`;
+}
+
+function cherry(age, small) {
+  if (age === 0) return ground(small) + stem('M50 84Q52 70 49 58', 5, '#8c7156')
+    + leaf(50, 73, false, '#a8b77a') + leaf(51, 67, true, '#bdc68c') + ellipse(49, 57, 3, 4, '#e6a8b4');
+  let result = ground(small) + path('M41 88Q47 67 43 48L54 46Q51 66 58 88Z', '#967454')
+    + path('M44 86Q49 66 47 50L51 49Q48 67 52 86Z', '#c5a17b')
+    + stem(age === 1 ? 'M48 65L31 48M51 57L69 39' : 'M48 64L23 39M50 53L70 29M47 58L43 27', 5, '#977658');
+  if (age === 1) return result + ellipse(33, 42, 13, 12, '#daa1ae') + ellipse(60, 35, 18, 14, '#e7b3bd')
+    + cherryBlossom(31, 42, .7, small) + cherryBlossom(57, 34, .81, small) + cherryBlossom(73, 41, .57, small);
+  result += [[24, 39, 17], [38, 25, 20], [60, 24, 21], [77, 39, 16], [63, 50, 23], [39, 49, 22]].map(([x, y, r], i) => ellipse(x, y + 3, r, r * .85, '#d995aa') + ellipse(x - 1, y, r - 1, r * .82, i % 2 ? '#f1c2ca' : '#eeb3c1')).join('');
+  result += [[22, 39, .66], [39, 25, .81], [61, 26, .73], [79, 39, .62], [65, 51, .73], [40, 49, .78], [51, 39, .58]].map(([x, y, scale]) => cherryBlossom(x, y, scale, small)).join('');
+  if (!small) result += ellipse(74, 75, 3, 5, '#f2beca', 'transform="rotate(35 74 75)"') + ellipse(27, 80, 4, 2.5, '#e8adbd');
+  return result;
+}
+
 function hive(small) {
   let result = ground(small)
     + path('M23 77L19 87L24 89L30 78M68 78L75 89L81 87L76 77', '#7c6447')
@@ -213,7 +351,7 @@ function well(small) {
   return result;
 }
 
-const ART = { sunflower, clover, lavender, berry, mushroom, mint, tulip, fern, pumpkin, rose, lotus };
+const ART = { sunflower, clover, lavender, berry, mushroom, mint, tulip, fern, pumpkin, rose, lotus, daisy, bluebell, strawberry, bamboo, cactus, hydrangea, orchid, cherry };
 
 /** Return a decorative SVG. Age 0: seedling; 1: growing; 2+: mature. */
 export function plantArt(type, age = 0, { small = false } = {}) {

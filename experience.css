@@ -1,4 +1,11 @@
 /* The little world around the puzzle, v6. */
+/* v8: readable choices and a saved, single-use upgrade reroll. */
+.seed-card small{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.reroll-row{margin-top:12px}.reroll-row button{width:100%;justify-content:center;gap:8px;min-height:44px}.reroll-row button>span{font-size:21px}.reroll-row button>small{font-size:10px;background:#fffaf0a6;padding:3px 7px;border-radius:20px}.reroll-row button:disabled{opacity:.65}.reroll-row p{font-size:9px;line-height:1.5;color:#7c8269;text-align:center;margin-top:7px;word-break:keep-all}
+.unlock-plants.many{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.unlock-plants.many>span{padding:5px 3px}.unlock-plants.many svg{width:32px;height:32px}.unlock-plants.many small{display:none}
+.new-rules-link{min-height:44px;border-radius:13px;border:1px solid #afbc99;background:#fff7dfe6;color:#4b6847;font-size:11px;font-weight:700}.home-panel:has(.new-rules-link:not([hidden])){gap:8px}
+.stage-card .new-label{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-height:650px) and (orientation:portrait){dialog[data-mode="upgrade"]{padding:14px 16px}dialog[data-mode="upgrade"] .sheet-heading h2{font-size:20px}dialog[data-mode="upgrade"] .upgrade-list{gap:7px}dialog[data-mode="upgrade"] .upgrade-card{min-height:72px;padding:8px}dialog[data-mode="upgrade"] .upgrade-card small{font-size:9px}dialog[data-mode="upgrade"] .upgrade-intro{margin-bottom:9px}dialog[data-mode="upgrade"] .reroll-row{margin-top:9px}.unlock-plants.many svg{width:27px;height:27px}.unlock-plants.many strong{font-size:10px}dialog[data-mode="intro"] .unlock-heading{margin-top:6px}.new-rules-link{font-size:10px}.home-panel:has(.new-rules-link:not([hidden])) .home-note{display:none}}
 /* v7: independently saved music and effects; music gain works through Web Audio. */
 .music-settings{background:#edf0d9;border-radius:15px;padding:0 11px 3px}
 .music-settings .music-row{padding:9px 0 3px;border:0;min-height:66px}

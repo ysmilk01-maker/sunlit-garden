@@ -1,4 +1,5 @@
 import { STAGES, SEEDS, newRun, stageFor, picksToday, plant, harvest, chooseUpgrade, sanitizeState, sanitizeCampaign } from './campaign-core.mjs';
+import { newRun as legacyRun } from './campaign-legacy-v7.mjs';
 
 export const FEATURE_KEY = 'sunlit-garden:features:v1';
 export const STORAGE_KEY = FEATURE_KEY;
@@ -22,9 +23,9 @@ const firstOfferCache = new Map();
 function firstOffers(state, day) {
   if (day === state.day && state.history?.[0]?.offers) return state.history[0].offers;
   if (day === state.day && state.phase === 'plant' && state.placements === 0) return state.offers;
-  const key = `${state.stageId}:${state.seed}:${day}`;
+  const key = `${state.version}:${state.stageId}:${state.seed}:${day}`;
   if (firstOfferCache.has(key)) return firstOfferCache.get(key);
-  let replay = newRun(state.seed, state.stageId);
+  let replay = state.version === 2 ? legacyRun(state.seed, state.stageId) : newRun(state.seed, state.stageId);
   while (replay.day < day) {
     if (replay.phase === 'upgrade') { replay = chooseUpgrade(replay, replay.upgradeOffers[0]); continue; }
     while (replay.placements < picksToday(replay)) replay = plant(replay, replay.board.findIndex(tile => tile === null), replay.offers[0]);
@@ -136,7 +137,7 @@ export function reconcileCampaign(profile, campaign) {
   let changed = false;
   for (const [id, result] of Object.entries(progress.stages)) {
     if (!result.cleared) continue;
-    const stageId = Number(id), stars = starsFor({ stageId, phase: 'over', score: result.best });
+    const stageId = Number(id), stars = result.earnedStars ?? starsFor({ stageId, phase: 'over', score: result.best });
     if (!stars) continue;
     if (!clean.clearedStages.includes(stageId)) {
       clean.clearedStages.push(stageId);
