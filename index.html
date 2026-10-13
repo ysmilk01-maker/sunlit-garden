@@ -2,16 +2,16 @@
 <html lang="ko">
 <head>
 <meta name="robots" content="noindex,nofollow">
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#183f32"><meta name="description" content="세 가지 씨앗 중 하나를 골라, 일곱 날 동안 나만의 조합을 키우는 작은 정원 게임."><title>햇빛정원 — 일곱 날의 정원</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#183f32"><meta name="description" content="세 가지 씨앗 중 하나를 골라, 일곱 날 동안 나만의 조합을 키우는 작은 정원 게임."><title>햇빛정원 — 백 개의 정원</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2324553a'/%3E%3Cpath d='M32 49V24M32 35C12 35 13 14 13 14C33 14 32 35 32 35ZM32 29C52 29 51 8 51 8C31 8 32 29 32 29Z' fill='%23f7f0df' stroke='%23f7f0df' stroke-width='3'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="./styles.css?v=20261013-4">
+<link rel="stylesheet" href="./styles.css?v=20261013-5">
 </head>
 <body>
 <main class="app">
-  <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true">✿</span><div><h1>햇빛정원</h1><p>일곱 날의 정원</p></div></div><div class="header-actions"><button id="help" class="icon-button" aria-label="놀이 방법과 식물 도감" aria-haspopup="dialog">?</button><button id="sound" class="icon-button" aria-label="소리 켜기" aria-pressed="false"></button></div></header>
+  <header class="topbar"><button id="stage-button" class="brand stage-button" aria-label="단계 선택" aria-haspopup="dialog"><span class="brand-mark" aria-hidden="true">✿</span><span><span class="brand-title">햇빛정원</span><span id="stage-label" class="brand-sub">1 / 100단계 ▾</span></span></button><div class="header-actions"><button id="help" class="icon-button" aria-label="놀이 방법과 식물 도감" aria-haspopup="dialog">?</button><button id="sound" class="icon-button" aria-label="소리 켜기" aria-pressed="false"></button></div></header>
   <section class="game" aria-label="씨앗을 고르고 정원을 키워요">
     <div class="journey"><div class="journey-top"><h2><strong id="day">1</strong><span>일째 <small>/ 7</small></span></h2><div class="weather" id="weather"></div><button id="score-button" class="score-button" aria-label="정원 기록 보기" aria-haspopup="dialog"><span aria-hidden="true">✦</span><strong id="score">0</strong><small>햇살</small></button></div><div class="journey-bottom"><div id="days" class="days" aria-label="7일 진행"></div><span id="goal" class="goal"></span></div></div>
-    <div class="board-space" id="board-space"><div class="garden-frame" id="garden-frame"><div class="garden-edge" aria-hidden="true"><span>MY LITTLE GARDEN</span><span>✦</span></div><div id="board" class="board" aria-label="4행 4열 정원"></div><div class="garden-floor" aria-hidden="true"><span>✧</span><span>✿</span><span>✧</span></div></div><div id="harvest-banner" class="harvest-banner" hidden></div></div>
+    <div class="board-space" id="board-space"><div class="garden-frame" id="garden-frame"><div class="garden-edge" aria-hidden="true"><span id="board-label">MY LITTLE GARDEN</span><span>✦</span></div><div id="board" class="board" aria-label="정원"></div><div id="zoom-zones" class="zoom-zones" hidden></div><div class="garden-floor" aria-hidden="true"><span id="board-hint">✧　✿　✧</span></div></div><div id="harvest-banner" class="harvest-banner" hidden></div></div>
     <div class="forecast"><span id="forecast-label">오늘 수확 예상</span><strong id="forecast">+0 <small>햇살</small></strong><span id="combos"></span></div>
     <div class="draft"><div class="draft-heading"><h3 id="draft-title">씨앗 하나를 골라요</h3><span id="picks">오늘 0 / 2</span></div><div id="seed-cards" class="seed-cards"></div><div id="ready-card" class="ready-card" hidden><span aria-hidden="true">✦</span><div><strong>오늘의 정원이 준비됐어요</strong><p>수확하면 모든 식물이 한 번 더 자라요.</p></div></div><p id="tip" class="tip">씨앗을 고른 뒤 빈 땅을 누르세요.</p></div>
     <div class="actions"><button id="undo" class="secondary" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h9a6 6 0 0 1 0 12"/></svg><span>되돌리기</span></button><button id="harvest" class="primary" disabled>씨앗 2개를 심어 주세요</button></div>
@@ -21,5 +21,5 @@
 </main>
 <dialog id="sheet" aria-labelledby="sheet-title"><div class="sheet-heading"><div><p id="sheet-eyebrow" class="eyebrow"></p><h2 id="sheet-title"></h2></div><button id="close-sheet" class="icon-button" aria-label="닫기">×</button></div><div id="sheet-content"></div></dialog>
 <div class="orientation-notice" role="status"><div><span class="phone" aria-hidden="true">✿</span><p class="eyebrow">햇빛정원</p><h2>화면을 세워 주세요</h2><p>세로 화면에서 정원을 이어서 키울 수 있어요.</p></div></div>
-<script type="module" src="./app.mjs?v=20261013-4"></script>
+<script type="module" src="./campaign-app.mjs?v=20261013-5"></script>
 </body></html>
