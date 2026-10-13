@@ -1,5 +1,6 @@
-import { STAGES, SEEDS, newRun, stageFor, picksToday, plant, harvest, chooseUpgrade, sanitizeState, sanitizeCampaign } from './campaign-core.mjs?v=20261013-8';
-import { newRun as legacyRun } from './campaign-legacy-v7.mjs';
+import { SEEDS, newRun, stageFor, isStageId as validStageId, picksToday, plant, harvest, chooseUpgrade, sanitizeState, sanitizeCampaign } from './campaign-core.mjs?v=20261013-9';
+import { newRun as legacyRun } from './campaign-legacy-v7.mjs?v=20261013-9';
+import { newRun as previousRun } from './campaign-legacy-v8.mjs?v=20261013-9';
 
 export const FEATURE_KEY = 'sunlit-garden:features:v1';
 export const STORAGE_KEY = FEATURE_KEY;
@@ -25,7 +26,8 @@ function firstOffers(state, day) {
   if (day === state.day && state.phase === 'plant' && state.placements === 0) return state.offers;
   const key = `${state.version}:${state.stageId}:${state.seed}:${day}`;
   if (firstOfferCache.has(key)) return firstOfferCache.get(key);
-  let replay = state.version === 2 ? legacyRun(state.seed, state.stageId) : newRun(state.seed, state.stageId);
+  const createRun = state.version === 2 ? legacyRun : state.version === 3 ? previousRun : newRun;
+  let replay = createRun(state.seed, state.stageId);
   while (replay.day < day) {
     if (replay.phase === 'upgrade') { replay = chooseUpgrade(replay, replay.upgradeOffers[0]); continue; }
     while (replay.placements < picksToday(replay)) replay = plant(replay, replay.board.findIndex(tile => tile === null), replay.offers[0]);
@@ -39,7 +41,7 @@ function firstOffers(state, day) {
 
 export function missionFor(state, day = state?.day) {
   const stage = stageFor(state);
-  if (!stage || !MISSION_DAYS.includes(day) || day > state.day || !Array.isArray(state.board) || state.board.length !== stage.cols * stage.rows) return null;
+  if (!stage || ![2, 3, 4].includes(state?.version) || !MISSION_DAYS.includes(day) || day > state.day || !Array.isArray(state.board) || state.board.length !== stage.cols * stage.rows) return null;
   const sameDayHistory = day === state.day ? state.history?.[0] : null;
   const startBoard = sameDayHistory?.board || state.board.map(tile => tile && tile.type !== 'well' && tile.plantedDay >= day ? null : tile);
   const todayBoard = state.board.map(tile => tile && tile.type !== 'well' && tile.plantedDay > day ? null : tile);
@@ -79,23 +81,24 @@ export function newProfile() {
 export function sanitizeProfile(input) {
   try {
     if (!input || input.version !== 1 || !Number.isSafeInteger(input.petals) || input.petals < 0 || !Array.isArray(input.claimedMissions) || !Array.isArray(input.claimedHarvests) || !Array.isArray(input.clearedStages) || !input.stageStars || typeof input.stageStars !== 'object' || Array.isArray(input.stageStars) || !input.options || typeof input.options.sound !== 'boolean' || typeof input.options.haptics !== 'boolean') return null;
-    if (input.claimedMissions.length > STAGES.length * MISSION_DAYS.length || input.claimedHarvests.length !== input.claimedMissions.length || input.clearedStages.length > STAGES.length || new Set(input.claimedMissions).size !== input.claimedMissions.length || new Set(input.claimedHarvests).size !== input.claimedHarvests.length || new Set(input.clearedStages).size !== input.clearedStages.length) return null;
+    if (input.claimedHarvests.length !== input.claimedMissions.length || new Set(input.claimedMissions).size !== input.claimedMissions.length || new Set(input.claimedHarvests).size !== input.claimedHarvests.length) return null;
+    const clearedStages = new Set(input.clearedStages);
+    if (clearedStages.size !== input.clearedStages.length || input.clearedStages.some(id => !validStageId(id))) return null;
     const missions = new Set();
     for (const id of input.claimedMissions) {
       if (typeof id !== 'string' || !/^([1-9][0-9]*):(2|4|6)$/.test(id)) return null;
-      const [stageId] = id.split(':').map(Number); if (!stageFor(stageId)) return null; missions.add(id);
+      const [stageId] = id.split(':').map(Number); if (!validStageId(stageId)) return null; missions.add(id);
     }
     const receiptMissions = new Set();
     for (const id of input.claimedHarvests) {
       if (typeof id !== 'string' || !/^([1-9][0-9]*):(0|[1-9][0-9]*):(2|4|6)$/.test(id)) return null;
       const [stageId, seed, day] = id.split(':').map(Number), missionId = `${stageId}:${day}`;
-      if (!stageFor(stageId) || !Number.isSafeInteger(seed) || !missions.has(missionId) || receiptMissions.has(missionId)) return null;
+      if (!validStageId(stageId) || !Number.isSafeInteger(seed) || !missions.has(missionId) || receiptMissions.has(missionId)) return null;
       receiptMissions.add(missionId);
     }
-    if (input.clearedStages.some(id => !Number.isInteger(id) || !stageFor(id))) return null;
     const stageStars = {};
     for (const [id, stars] of Object.entries(input.stageStars)) {
-      if (!/^[1-9][0-9]*$/.test(id) || !stageFor(Number(id)) || !Number.isInteger(stars) || stars < 1 || stars > 3 || !input.clearedStages.includes(Number(id))) return null;
+      if (!/^[1-9][0-9]*$/.test(id) || !validStageId(Number(id)) || !Number.isInteger(stars) || stars < 1 || stars > 3 || !clearedStages.has(Number(id))) return null;
       stageStars[id] = stars;
     }
     if (input.clearedStages.some(id => !own(stageStars, id)) || input.petals !== input.claimedMissions.length * MISSION_REWARD + input.clearedStages.length * CLEAR_REWARD) return null;
@@ -108,9 +111,9 @@ export function sanitizeProfile(input) {
   } catch { return null; }
 }
 export function starsFor(state) {
-  const stage = stageFor(state); if (!stage || state.phase !== 'over' || !Number.isFinite(state.score)) return 0;
-  if (state.score * 100 >= stage.target * 140) return 3;
-  if (state.score * 100 >= stage.target * 115) return 2;
+  const stage = stageFor(state); if (!stage || state.phase !== 'over' || !Number.isSafeInteger(state.score) || state.score < 0 || !Number.isSafeInteger(stage.target) || stage.target < 1) return 0;
+  if (BigInt(state.score) * 100n >= BigInt(stage.target) * 140n) return 3;
+  if (BigInt(state.score) * 100n >= BigInt(stage.target) * 115n) return 2;
   return state.score >= stage.target ? 1 : 0;
 }
 export function claimHarvest(profile, state) {
@@ -135,12 +138,14 @@ export function reconcileCampaign(profile, campaign) {
   const clean = sanitizeProfile(profile), progress = sanitizeCampaign(campaign);
   if (!clean || !progress) return profile;
   let changed = false;
+  const clearedStages = new Set(clean.clearedStages);
   for (const [id, result] of Object.entries(progress.stages)) {
     if (!result.cleared) continue;
     const stageId = Number(id), stars = result.earnedStars ?? starsFor({ stageId, phase: 'over', score: result.best });
     if (!stars) continue;
-    if (!clean.clearedStages.includes(stageId)) {
+    if (!clearedStages.has(stageId)) {
       clean.clearedStages.push(stageId);
+      clearedStages.add(stageId);
       clean.petals += CLEAR_REWARD;
       clean.stageStars[stageId] = stars;
       changed = true;
@@ -168,7 +173,7 @@ export function setOptions(profile, patch) {
 }
 export function summaryFor(profile, campaign) {
   const valid = sanitizeProfile(profile) || newProfile(), progress = sanitizeCampaign(campaign), collected = availableDecorations(valid);
-  return { petals: valid.petals, cleared: progress ? Object.values(progress.stages).filter(stage => stage.cleared).length : valid.clearedStages.length, collected: collected.length, stars: Object.values(valid.stageStars).reduce((sum, value) => sum + value, 0), unlockedStage: progress?.unlocked || 1, totalStages: STAGES.length, nextDecoration: Object.values(DECORATIONS).find(item => item.threshold > valid.petals) || null, selectedDecoration: valid.selectedDecoration, title: '나의 작은 정원' };
+  return { petals: valid.petals, cleared: progress ? Object.values(progress.stages).filter(stage => stage.cleared).length : valid.clearedStages.length, collected: collected.length, stars: Object.values(valid.stageStars).reduce((sum, value) => sum + value, 0), unlockedStage: progress?.unlocked || 1, totalStages: null, endless: true, nextDecoration: Object.values(DECORATIONS).find(item => item.threshold > valid.petals) || null, selectedDecoration: valid.selectedDecoration, title: '나의 작은 정원' };
 }
 export function loadProfile(storage) {
   let raw; try { raw = storage.getItem(FEATURE_KEY); } catch { return { profile: newProfile(), available: false }; }

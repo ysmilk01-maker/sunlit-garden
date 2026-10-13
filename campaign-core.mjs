@@ -1,9 +1,17 @@
 import { SEEDS as ORIGINAL_SEEDS, UPGRADES as ORIGINAL_UPGRADES, WEATHER as ORIGINAL_WEATHER } from './growth-core.mjs';
 import * as legacy from './campaign-legacy-v7.mjs';
+import * as legacy8 from './campaign-legacy-v8.mjs';
 
 export const LEGACY_SEEDS = legacy.SEEDS;
 export const LEGACY_UPGRADES = legacy.UPGRADES;
 export const LEGACY_WEATHER = legacy.WEATHER;
+export const V8_SEEDS = legacy8.SEEDS;
+export const V8_UPGRADES = legacy8.UPGRADES;
+export const V8_WEATHER = legacy8.WEATHER;
+export const MAX_STAGE_ID = Number.MAX_SAFE_INTEGER;
+export const STAGE_CACHE_LIMIT = 128;
+export const isStageId = id => Number.isSafeInteger(id) && id >= 1;
+const previousRules = state => state?.version === 2 ? legacy : state?.version === 3 ? legacy8 : null;
 
 export const RUN_DAYS = 7;
 export const STORAGE_KEY = 'sunlit-garden:campaign:run:v1';
@@ -56,15 +64,54 @@ const regions = [
   { first: 66, last: 80, cols: 7, rows: 6, name: '장미의 약속', target: 960, step: 10 },
   { first: 81, last: 100, cols: 7, rows: 7, name: '물빛 정원', target: 1140, step: 6 },
 ];
-const calibratedTargets = legacy.STAGES.map(stage => Math.round(stage.target * 1.15 / 5) * 5);
-// Development targets; all fixed stage seeds are checked by tools/campaign-balance.mjs.
-export const STAGES = Array.from({ length: 100 }, (_, i) => {
-  const id = i + 1, region = regions.find(item => id >= item.first && id <= item.last), { cols, rows } = region;
-  const seed = 20261013 + id * 7919, rng = random(seed, 437);
+const calibratedTargets = legacy8.STAGES.map(stage => Math.round(stage.target * 1.20 / 5) * 5);
+const stageSalt = (id, multiplier, extra = 0) => ((Math.imul(id % 4294967296, multiplier) ^ Math.imul(Math.floor(id / 4294967296), 0x9e3779b9)) + extra) >>> 0;
+function makeStage(id) {
+  const region = regions.find(item => id >= item.first && id <= item.last) || regions.at(-1);
+  const { cols, rows } = region;
+  const seed = id <= 100 ? 20261013 + id * 7919 : Math.floor(random(id, 29173)() * 4294967296);
+  const rng = random(seed, 437);
   const wellIndex = (1 + Math.floor(rng() * (rows - 2))) * cols + 1 + Math.floor(rng() * (cols - 2));
-  return { id, name: `${region.name} ${id}`, cols, rows, seed, wellIndex, pool: Object.entries(unlockAt).filter(([at]) => Number(at) <= id).flatMap(([, types]) => types), unlocks: [...(unlockAt[id] || [])], target: calibratedTargets[i], picksPerDay: countsFor(cols * rows - 2) };
-});
-export function stageFor(stateOrId = 1) { if (stateOrId?.version === 2) return legacy.stageFor(stateOrId); const id = typeof stateOrId === 'object' && stateOrId ? stateOrId.stageId : stateOrId; return STAGES.find(stage => stage.id === id) || null; }
+  return { id, name: `${id <= 100 ? region.name : '이어지는 정원'} ${id}`, cols, rows, seed, wellIndex, pool: Object.entries(unlockAt).filter(([at]) => Number(at) <= id).flatMap(([, types]) => types), unlocks: [...(unlockAt[id] || [])], target: id <= 100 ? calibratedTargets[id - 1] : endlessTargetCeiling(id), picksPerDay: countsFor(cols * rows - 2) };
+}
+export function endlessTargetCeiling(id = MAX_STAGE_ID) {
+  const base = calibratedTargets.at(-1), cap = Math.round(base * 1.15 / 5) * 5;
+  return base + Math.floor((cap - base) * Math.min(300, Math.max(0, id - 100)) / 300 / 5) * 5;
+}
+// The first hundred stages remain a catalog; later stages are generated on demand.
+export const STAGES = Array.from({ length: 100 }, (_, index) => makeStage(index + 1));
+const generatedStages = new Map();
+export function stageFor(stateOrId = 1) {
+  const previous = previousRules(stateOrId);
+  if (previous) return previous.stageFor(stateOrId);
+  const id = typeof stateOrId === 'object' && stateOrId ? stateOrId.stageId : stateOrId;
+  if (!isStageId(id)) return null;
+  if (id <= 100) return STAGES[id - 1];
+  const cached = generatedStages.get(id);
+  if (cached) {
+    generatedStages.delete(id); generatedStages.set(id, cached);
+    return cached.stage;
+  }
+  const entry = { stage: makeStage(id), witness: null };
+  // Publish the provisional stage before simulation so its API calls cannot recurse.
+  generatedStages.set(id, entry);
+  try {
+    entry.witness = playReference(id);
+    entry.stage.target = Math.max(5, Math.min(entry.stage.target, Math.floor(entry.witness.state.score * 94 / 100 / 5) * 5));
+    entry.stage.referenceScore = entry.witness.state.score;
+  } catch (error) {
+    generatedStages.delete(id);
+    throw error;
+  }
+  while (generatedStages.size > STAGE_CACHE_LIMIT) generatedStages.delete(generatedStages.keys().next().value);
+  return entry.stage;
+}
+export function stageCacheSize() { return generatedStages.size; }
+export function referenceRun(id) {
+  if (!stageFor(id)) return null;
+  const result = id > 100 ? generatedStages.get(id).witness : playReference(id);
+  return JSON.parse(JSON.stringify(result));
+}
 export function picksToday(state) { return stageFor(state)?.picksPerDay[state.day - 1] ?? 0; }
 const neighbors = (index, cols, rows) => [index - cols, index + cols, ...(index % cols ? [index - 1] : []), ...(index % cols < cols - 1 ? [index + 1] : [])].filter(i => i >= 0 && i < cols * rows);
 function random(seed, salt) {
@@ -76,49 +123,64 @@ function sample(values, seed, salt, count = 3) {
   for (let i = copy.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [copy[i], copy[j]] = [copy[j], copy[i]]; }
   return copy.slice(0, count);
 }
-const offersFor = (seed, stage, day, placements) => sample(stage.pool, seed, stage.id * 3571 + day * 31 + placements * 719);
+const offersFor = (seed, stage, day, placements) => sample(stage.pool, seed, stageSalt(stage.id, 3571, day * 31 + placements * 719));
 const upgradeRequirement = { sun_pact: 'sunflower', colony: 'clover', diversity: 'lavender', jam: 'berry', shade: 'mushroom', bees: 'hive' };
 function upgradesFor(seed, stage, day, picked, reroll = 0) {
   const pool = Object.keys(UPGRADES).filter(id => !picked.includes(id) && (!upgradeRequirement[id] || stage.pool.includes(upgradeRequirement[id])));
-  const salt = stage.id * 1999 + day * 1543;
+  const salt = stageSalt(stage.id, 1999, day * 1543);
   const initial = sample(pool, seed, salt);
   if (!reroll) return initial;
   const alternatives = pool.filter(id => !initial.includes(id));
   return sample(alternatives.length >= 3 ? alternatives : pool, seed, salt + reroll * 104729);
 }
-const weatherFor = (seed, stageId) => { const rng = random(seed, 997 + stageId * 1291); return Array.from({ length: RUN_DAYS }, () => ['sun', 'rain', 'cloud'][Math.floor(rng() * 3)]); };
+const weatherFor = (seed, stageId) => { const rng = random(seed, stageSalt(stageId, 1291, 997)); return Array.from({ length: RUN_DAYS }, () => ['sun', 'rain', 'cloud'][Math.floor(rng() * 3)]); };
 export function newRun(seed, stageId = 1) {
   const stage = stageFor(stageId) || STAGES[0];
   if (!Number.isSafeInteger(seed) || seed < 0) seed = stage.seed;
   const board = Array(stage.cols * stage.rows).fill(null);
   board[stage.wellIndex] = { type: 'well', age: 0, plantedDay: 0 };
-  return { version: 3, stageId: stage.id, cols: stage.cols, rows: stage.rows, wellIndex: stage.wellIndex, runDays: RUN_DAYS, picksPerDay: [...stage.picksPerDay], seed, day: 1, phase: 'plant', board, offers: offersFor(seed, stage, 1, 0), placements: 0, score: 0, upgrades: [], upgradeOffers: [], upgradeRerolls: { 2: 0, 4: 0, 6: 0 }, history: [], harvests: [], lastHarvest: null, weather: weatherFor(seed, stage.id) };
+  return { version: 4, stageId: stage.id, cols: stage.cols, rows: stage.rows, wellIndex: stage.wellIndex, runDays: RUN_DAYS, picksPerDay: [...stage.picksPerDay], seed, day: 1, phase: 'plant', board, offers: offersFor(seed, stage, 1, 0), placements: 0, score: 0, upgrades: [], upgradeOffers: [], upgradeRerolls: { 2: 0, 4: 0, 6: 0 }, history: [], harvests: [], lastHarvest: null, weather: weatherFor(seed, stage.id) };
 }
 export function plant(state, index, type) {
-  if (state?.version === 2) return legacy.plant(state, index, type);
+  const previous = previousRules(state); if (previous) return previous.plant(state, index, type);
   if (!state || state.phase !== 'plant' || state.placements >= picksToday(state) || !Number.isInteger(index) || index < 0 || index >= state.board.length || state.board[index] !== null || !state.offers.includes(type) || !stageFor(state)?.pool.includes(type)) return state;
   const board = cloneBoard(state.board); board[index] = { type, age: 0, plantedDay: state.day };
   const history = [...state.history, { board: cloneBoard(state.board), offers: [...state.offers], placements: state.placements }];
   return { ...state, board, history, placements: state.placements + 1, offers: offersFor(state.seed, stageFor(state), state.day, state.placements + 1) };
 }
 export function undo(state) {
-  if (state?.version === 2) return legacy.undo(state);
+  const oldRules = previousRules(state); if (oldRules) return oldRules.undo(state);
   if (!state || state.phase !== 'plant' || !state.history.length) return state;
   const previous = state.history.at(-1);
   return { ...state, board: cloneBoard(previous.board), offers: [...previous.offers], placements: previous.placements, history: state.history.slice(0, -1) };
 }
 export function forecast(state) {
-  if (state?.version === 2) return legacy.forecast(state);
-  const upgrades = new Set(state.upgrades), weather = state.weather[state.day - 1], stage = stageFor(state);
+  const previous = previousRules(state); if (previous) return previous.forecast(state);
+  return evaluateHarvest(state, true);
+}
+function evaluateHarvest(state, details) {
+  const upgrades = new Set(state.upgrades), weather = state.weather[state.day - 1];
   const kinds = new Set(state.board.filter(tile => tile && tile.type !== 'well').map(tile => tile.type)), ecosystem = kinds.size >= 6;
+  const columnCounts = new Map();
+  state.board.forEach((tile, index) => {
+    if (!tile || tile.type === 'well' || tile.type === 'hive') return;
+    const key = `${index % state.cols}:${tile.type}`;
+    columnCounts.set(key, (columnCounts.get(key) || 0) + 1);
+  });
   const tiles = [];
+  let total = 0, comboCount = 0;
   for (let index = 0; index < state.board.length; index++) {
     const tile = state.board[index]; if (!tile || tile.type === 'well') continue;
     const nearIndices = neighbors(index, state.cols, state.rows);
     const near = nearIndices.map(i => state.board[i]).filter(Boolean), reasons = [];
+    let value = 0, hasCombo = false;
     const otherPlants = near.filter(p => own(SEEDS, p.type) && p.type !== 'hive' && p.type !== tile.type);
     const edge = index < state.cols || index >= state.board.length - state.cols || index % state.cols === 0 || index % state.cols === state.cols - 1;
-    const add = (label, value, combo = false) => { if (value > 0) reasons.push({ label, value, combo }); };
+    const add = (label, amount, combo = false) => {
+      if (amount <= 0) return;
+      value += amount; hasCombo ||= combo;
+      if (details) reasons.push({ label, value: amount, combo });
+    };
     const ageBonus = Math.min(tile.age, 2);
     if (tile.type === 'sunflower') { add('기본', 3); add('성장', ageBonus); if (weather === 'sun') add('햇살', 3, true); if (upgrades.has('sun_pact')) add('햇살 약속', 2, true); }
     if (tile.type === 'clover') { add('기본', 2); add('성장', ageBonus); add('클로버 이웃·최대 둘', Math.min(2, near.filter(p => p.type === 'clover').length) * (upgrades.has('colony') ? 3 : 2), true); if (otherPlants.length) add('다른 식물과 공생', 2, true); }
@@ -141,18 +203,20 @@ export function forecast(state) {
     if (tile.type === 'orchid') { add('기본', 3); add('성장', ageBonus); if (new Set(near.filter(p => FLOWERS.has(p.type) && p.type !== 'orchid').map(p => p.type)).size >= 2) add('다채로운 꽃 이웃', 5, true); }
     if (tile.type === 'cherry') { add('기본', 3); add('성장', ageBonus); if (tile.age >= 3) add('활짝 핀 벚꽃', 4, true); if (near.some(p => FLOWERS.has(p.type) && p.type !== 'cherry')) add('꽃 친구', 2, true); }
     if (tile.type !== 'hive' && near.some(p => p.type === 'well')) add('우물', upgrades.has('spring') ? 4 : 2, true);
+    if (tile.type !== 'hive') add('같은 열', Math.min(3, (columnCounts.get(`${index % state.cols}:${tile.type}`) || 1) - 1) * 2, true);
     if (upgrades.has('patience') && tile.age >= 3) add('오래된 정원', 2, true);
     if (upgrades.has('wild') && ecosystem && tile.type !== 'hive') add('작은 생태계', 2, true);
     if (upgrades.has('companions') && tile.type !== 'hive' && new Set(otherPlants.map(p => p.type)).size >= 2) add('공생의 정원', 2, true);
     if (upgrades.has('edge_bloom') && tile.type !== 'hive' && edge && otherPlants.length) add('테두리 화단', 3, true);
     if (upgrades.has('mixed_beds') && FLOWERS.has(tile.type) && near.some(p => own(SEEDS, p.type) && p.type !== 'hive' && !FLOWERS.has(p.type))) add('꽃과 잎 사이', 2, true);
-    tiles.push({ index, type: tile.type, value: reasons.reduce((sum, reason) => sum + reason.value, 0), reasons });
+    total += value; if (hasCombo) comboCount++;
+    if (details) tiles.push({ index, type: tile.type, value, reasons });
   }
-  return { total: tiles.reduce((sum, tile) => sum + tile.value, 0), tiles, comboCount: tiles.filter(tile => tile.reasons.some(reason => reason.combo)).length };
+  return { total, tiles, comboCount };
 }
 function nextDay(state) { const day = state.day + 1; return { ...state, day, phase: 'plant', placements: 0, history: [], upgradeOffers: [], offers: offersFor(state.seed, stageFor(state), day, 0) }; }
 export function harvest(state) {
-  if (state?.version === 2) return legacy.harvest(state);
+  const previous = previousRules(state); if (previous) return previous.harvest(state);
   if (!state || state.phase !== 'plant' || state.placements !== picksToday(state)) return state;
   const result = { ...forecast(state), day: state.day, weather: state.weather[state.day - 1] };
   const board = state.board.map(tile => tile && tile.type !== 'well' ? { ...tile, age: Math.min(7, tile.age + 1) } : tile ? { ...tile } : null);
@@ -162,17 +226,48 @@ export function harvest(state) {
   return nextDay(scored);
 }
 export function chooseUpgrade(state, id) {
-  if (state?.version === 2) return legacy.chooseUpgrade(state, id);
+  const previous = previousRules(state); if (previous) return previous.chooseUpgrade(state, id);
   if (!state || state.phase !== 'upgrade' || !state.upgradeOffers.includes(id) || state.upgrades.includes(id) || !own(UPGRADES, id)) return state;
   return nextDay({ ...state, upgrades: [...state.upgrades, id] });
 }
 export function rerollsRemaining(state) {
-  return state?.version === 3 && state.phase === 'upgrade' && state.upgradeRerolls?.[state.day] === 0 ? 1 : 0;
+  const previous = previousRules(state); if (previous) return previous.rerollsRemaining?.(state) ?? 0;
+  return state?.version === 4 && state.phase === 'upgrade' && state.upgradeRerolls?.[state.day] === 0 ? 1 : 0;
 }
 export function rerollUpgrades(state) {
+  const previous = previousRules(state); if (previous) return previous.rerollUpgrades?.(state) ?? state;
   if (!rerollsRemaining(state)) return state;
   const upgradeRerolls = { ...state.upgradeRerolls, [state.day]: 1 };
   return { ...state, upgradeRerolls, upgradeOffers: upgradesFor(state.seed, stageFor(state), state.day, state.upgrades, 1) };
+}
+function playReference(stageId) {
+  let state = newRun(undefined, stageId);
+  const moves = [];
+  while (state.phase !== 'over') {
+    if (state.phase === 'upgrade') {
+      let selected, best = -Infinity;
+      for (const id of state.upgradeOffers) {
+        const value = evaluateHarvest(chooseUpgrade(state, id), false).total;
+        if (value > best) { best = value; selected = id; }
+      }
+      moves.push({ day: state.day, upgrade: selected, offered: [...state.upgradeOffers] });
+      state = chooseUpgrade(state, selected);
+    } else if (state.placements === picksToday(state)) {
+      state = harvest(state);
+    } else {
+      let selectedType, selectedIndex, best = -Infinity;
+      for (const type of state.offers) for (let index = 0; index < state.board.length; index++) {
+        if (state.board[index] !== null) continue;
+        const board = [...state.board]; board[index] = { type, age: 0, plantedDay: state.day };
+        const value = evaluateHarvest({ ...state, board }, false).total;
+        if (value > best) { best = value; selectedType = type; selectedIndex = index; }
+      }
+      moves.push({ day: state.day, index: selectedIndex, type: selectedType, offered: [...state.offers] });
+      state = plant(state, selectedIndex, selectedType);
+    }
+  }
+  if (!sanitizeState(state)) throw Error('Generated stage reference path is invalid.');
+  return { state, moves };
 }
 function cleanBoard(board, day, stage) {
   if (!Array.isArray(board) || board.length !== stage.cols * stage.rows) return null;
@@ -205,7 +300,7 @@ function cleanHarvest(result, day, stage) {
   if (!result || result.day !== day || !own(WEATHER, result.weather) || !Number.isSafeInteger(result.total) || result.total < 0 || !Array.isArray(result.tiles) || result.tiles.length !== plantCount) return null;
   const tiles = [], indices = new Set();
   for (const tile of result.tiles) {
-    if (!tile || !Number.isInteger(tile.index) || tile.index < 0 || tile.index >= stage.cols * stage.rows || tile.index === stage.wellIndex || indices.has(tile.index) || !stage.pool.includes(tile.type) || !Number.isSafeInteger(tile.value) || tile.value < 0 || !Array.isArray(tile.reasons) || tile.reasons.length > 8) return null;
+    if (!tile || !Number.isInteger(tile.index) || tile.index < 0 || tile.index >= stage.cols * stage.rows || tile.index === stage.wellIndex || indices.has(tile.index) || !stage.pool.includes(tile.type) || !Number.isSafeInteger(tile.value) || tile.value < 0 || !Array.isArray(tile.reasons) || tile.reasons.length > 9) return null;
     const reasons = [];
     for (const reason of tile.reasons) {
       if (!reason || typeof reason.label !== 'string' || reason.label.length > 60 || !Number.isSafeInteger(reason.value) || reason.value <= 0 || typeof reason.combo !== 'boolean') return null;
@@ -220,9 +315,9 @@ function cleanHarvest(result, day, stage) {
   return { day, weather: result.weather, total: result.total, comboCount, tiles };
 }
 export function sanitizeState(input) {
-  if (input?.version === 2) return legacy.sanitizeState(input);
+  const previous = previousRules(input); if (previous) return previous.sanitizeState(input);
   try {
-    const stage = stageFor(input); if (!stage || input.version !== 3 || !Number.isSafeInteger(input.seed) || input.seed < 0 || !Number.isInteger(input.day) || input.day < 1 || input.day > RUN_DAYS || !['plant', 'upgrade', 'over'].includes(input.phase) || !Number.isInteger(input.placements) || input.placements < 0 || input.placements > stage.picksPerDay[input.day - 1] || !Number.isSafeInteger(input.score) || input.score < 0) return null;
+    const stage = stageFor(input); if (!stage || input.version !== 4 || !Number.isSafeInteger(input.seed) || input.seed < 0 || !Number.isInteger(input.day) || input.day < 1 || input.day > RUN_DAYS || !['plant', 'upgrade', 'over'].includes(input.phase) || !Number.isInteger(input.placements) || input.placements < 0 || input.placements > stage.picksPerDay[input.day - 1] || !Number.isSafeInteger(input.score) || input.score < 0) return null;
     if (input.cols !== stage.cols || input.rows !== stage.rows || input.wellIndex !== stage.wellIndex || input.runDays !== RUN_DAYS || !same(input.picksPerDay, stage.picksPerDay)) return null;
     if ((input.phase === 'over' && (input.day !== RUN_DAYS || input.placements !== picksToday(input))) || (input.phase === 'upgrade' && (![2, 4, 6].includes(input.day) || input.placements !== picksToday(input)))) return null;
     const board = cleanBoard(input.board, input.day, stage); if (!board) return null;
@@ -253,7 +348,7 @@ export function sanitizeState(input) {
       history.push({ board: previousBoard, offers: [...previous.offers], placements: i });
     }
     for (let i = 0; i < history.length; i++) if (!validPlacementTransition(history[i], history[i + 1]?.board || board, input.day)) return null;
-    return { version: 3, stageId: stage.id, cols: stage.cols, rows: stage.rows, wellIndex: stage.wellIndex, runDays: RUN_DAYS, picksPerDay: [...stage.picksPerDay], seed: input.seed, day: input.day, phase: input.phase, board, offers: [...input.offers], placements: input.placements, score: input.score, upgrades: [...input.upgrades], upgradeOffers: [...input.upgradeOffers], upgradeRerolls, history, harvests, lastHarvest: harvests.at(-1) || null, weather };
+    return { version: 4, stageId: stage.id, cols: stage.cols, rows: stage.rows, wellIndex: stage.wellIndex, runDays: RUN_DAYS, picksPerDay: [...stage.picksPerDay], seed: input.seed, day: input.day, phase: input.phase, board, offers: [...input.offers], placements: input.placements, score: input.score, upgrades: [...input.upgrades], upgradeOffers: [...input.upgradeOffers], upgradeRerolls, history, harvests, lastHarvest: harvests.at(-1) || null, weather };
   } catch { return null; }
 }
 function loadJSON(storage, key, sanitize, fallback) {
@@ -267,46 +362,59 @@ export const newCampaign = () => ({ version: 1, unlocked: 1, stages: {} });
 const starsAtTarget = (score, target) => score * 100 >= target * 140 ? 3 : score * 100 >= target * 115 ? 2 : score >= target ? 1 : 0;
 export function sanitizeCampaign(input) {
   try {
-    if (!input || input.version !== 1 || !Number.isInteger(input.unlocked) || input.unlocked < 1 || input.unlocked > STAGES.length || !input.stages || typeof input.stages !== 'object' || Array.isArray(input.stages)) return null;
+    if (!input || input.version !== 1 || !isStageId(input.unlocked) || !input.stages || typeof input.stages !== 'object' || Array.isArray(input.stages)) return null;
     const stages = {};
     for (const [key, value] of Object.entries(input.stages)) {
-      const stage = stageFor(Number(key));
-      if (!stage || String(stage.id) !== key || !value || !Number.isSafeInteger(value.best) || value.best < 0 || typeof value.cleared !== 'boolean' || !Number.isInteger(value.attempts) || value.attempts < 1 || !Array.isArray(value.runIds) || value.runIds.length !== value.attempts || new Set(value.runIds).size !== value.runIds.length) return null;
-      if (value.runIds.some(id => typeof id !== 'string' || !new RegExp(`^${stage.id}:(0|[1-9][0-9]*)(:v3)?$`).test(id) || !Number.isSafeInteger(Number(id.split(':')[1]))) || !value.runIds.includes(value.lastRunId)) return null;
-      const oldTarget = legacy.stageFor(stage.id).target;
-      const hasLegacyRuns = value.runIds.some(id => !id.endsWith(':v3'));
-      const hasNewRuns = value.runIds.some(id => id.endsWith(':v3'));
+      const id = Number(key);
+      // Completed endless records retain their actual goal. Do not regenerate all
+      // historical boards whenever saving a long campaign.
+      if (!isStageId(id) || String(id) !== key || !value || !Number.isSafeInteger(value.best) || value.best < 0 || typeof value.cleared !== 'boolean' || !Number.isSafeInteger(value.attempts) || value.attempts < 1 || !Array.isArray(value.runIds) || value.runIds.length !== value.attempts || new Set(value.runIds).size !== value.runIds.length) return null;
+      if (value.runIds.some(runId => typeof runId !== 'string' || !new RegExp(`^${id}:(0|[1-9][0-9]*)(:v[34])?$`).test(runId) || !Number.isSafeInteger(Number(runId.split(':')[1]))) || !value.runIds.includes(value.lastRunId)) return null;
+      const oldTarget = id <= 100 ? legacy.stageFor(id).target : null;
+      const v8Target = id <= 100 ? legacy8.stageFor(id).target : null;
+      const hasLegacyRuns = value.runIds.some(runId => runId.split(':').length === 2);
+      const hasV8Runs = value.runIds.some(runId => runId.endsWith(':v3'));
+      const hasNewRuns = value.runIds.some(runId => runId.endsWith(':v4'));
+      if (id > 100 && (hasLegacyRuns || hasV8Runs)) return null;
       let targetAtClear = value.targetAtClear, earnedStars = value.earnedStars;
       if (!own(value, 'targetAtClear') && !own(value, 'earnedStars')) {
-        if (hasNewRuns || value.cleared !== (value.best >= oldTarget)) return null;
+        if (hasNewRuns || hasV8Runs || value.cleared !== (value.best >= oldTarget)) return null;
         targetAtClear = value.cleared ? oldTarget : null;
         earnedStars = starsAtTarget(value.best, oldTarget);
       }
-      const possibleTargets = [...(hasLegacyRuns ? [oldTarget] : []), ...(hasNewRuns ? [stage.target] : [])];
       if (!Number.isInteger(earnedStars) || earnedStars < 0 || earnedStars > 3) return null;
-      if (value.cleared) {
-        if (!possibleTargets.includes(targetAtClear) || value.best < targetAtClear || earnedStars < 1 || earnedStars > starsAtTarget(value.best, Math.min(...possibleTargets))) return null;
-      } else if (targetAtClear !== null || earnedStars !== 0 || value.best >= Math.max(...possibleTargets)) return null;
+      if (id > 100) {
+        const ceiling = endlessTargetCeiling(id);
+        if (value.cleared) {
+          if (!Number.isSafeInteger(targetAtClear) || targetAtClear < 5 || targetAtClear % 5 || targetAtClear > ceiling || value.best < targetAtClear || earnedStars !== starsAtTarget(value.best, targetAtClear)) return null;
+        } else if (targetAtClear !== null || earnedStars !== 0 || value.best >= ceiling) return null;
+      } else {
+        const possibleTargets = [...(hasLegacyRuns ? [oldTarget] : []), ...(hasV8Runs ? [v8Target] : []), ...(hasNewRuns ? [STAGES[id - 1].target] : [])];
+        if (value.cleared) {
+          if (!possibleTargets.includes(targetAtClear) || value.best < targetAtClear || earnedStars < 1 || earnedStars > starsAtTarget(value.best, Math.min(...possibleTargets))) return null;
+        } else if (targetAtClear !== null || earnedStars !== 0 || value.best >= Math.max(...possibleTargets)) return null;
+      }
       stages[key] = { best: value.best, cleared: value.cleared, attempts: value.attempts, lastRunId: value.lastRunId, runIds: [...value.runIds], targetAtClear, earnedStars };
     }
-    let unlocked = 1; while (unlocked < STAGES.length && stages[unlocked]?.cleared) unlocked++;
-    if (unlocked !== input.unlocked || Object.keys(stages).some(id => Number(id) > unlocked)) return null;
+    let unlocked = 1; while (unlocked < MAX_STAGE_ID && stages[unlocked]?.cleared) unlocked++;
+    const oldCompletion = input.unlocked === 100 && unlocked === 101 && Object.keys(stages).every(id => Number(id) <= 100);
+    if ((unlocked !== input.unlocked && !oldCompletion) || Object.keys(stages).some(id => Number(id) > unlocked)) return null;
     return { version: 1, unlocked, stages };
   } catch { return null; }
 }
-export function canPlay(campaign, id) { return !!stageFor(id) && !!sanitizeCampaign(campaign) && id <= campaign.unlocked; }
+export function canPlay(campaign, id) { const clean = sanitizeCampaign(campaign); return isStageId(id) && !!clean && id <= clean.unlocked; }
 export function recordResult(campaign, state) {
   const clean = sanitizeState(state), progress = sanitizeCampaign(campaign);
   if (!clean || clean.phase !== 'over' || !progress || !canPlay(progress, clean.stageId)) return campaign;
-  const stage = stageFor(clean), previous = progress.stages[stage.id], runId = `${stage.id}:${clean.seed}${clean.version === 3 ? ':v3' : ''}`;
+  const stage = stageFor(clean), previous = progress.stages[stage.id], runId = `${stage.id}:${clean.seed}${clean.version >= 3 ? `:v${clean.version}` : ''}`;
   const runIds = previous?.runIds.includes(runId) ? [...previous.runIds] : [...(previous?.runIds || []), runId];
   const best = Math.max(previous?.best || 0, clean.score), cleared = !!previous?.cleared || clean.score >= stage.target;
   const targetAtClear = previous?.targetAtClear ?? (clean.score >= stage.target ? stage.target : null);
   const earnedStars = Math.max(previous?.earnedStars || 0, starsAtTarget(clean.score, stage.target));
   const result = { best, cleared, attempts: runIds.length, lastRunId: runId, runIds, targetAtClear, earnedStars };
-  if (same(previous, result)) return campaign;
+  if (same(previous, result) && progress.unlocked === campaign.unlocked) return campaign;
   const stages = { ...progress.stages, [stage.id]: result };
-  return { version: 1, unlocked: cleared ? Math.min(STAGES.length, Math.max(progress.unlocked, stage.id + 1)) : progress.unlocked, stages };
+  return { version: 1, unlocked: cleared ? Math.max(progress.unlocked, stage.id < MAX_STAGE_ID ? stage.id + 1 : MAX_STAGE_ID) : progress.unlocked, stages };
 }
 export function loadCampaign(storage) { const loaded = loadJSON(storage, CAMPAIGN_STORAGE_KEY, sanitizeCampaign, newCampaign); return { campaign: loaded.value, available: loaded.available }; }
 export function saveCampaign(storage, campaign) { try { const clean = sanitizeCampaign(campaign); if (!clean) return false; storage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(clean)); return true; } catch { return false; } }

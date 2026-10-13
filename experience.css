@@ -35,3 +35,15 @@ body{background:#28483d url('./assets/garden-play-v6.webp') center/cover fixed}.
 .garden-frame[data-decoration="stones"] .garden-floor:before{content:"";position:absolute;left:15px;bottom:-10px;width:12px;height:8px;border-radius:50%;background:#d4c9ac;box-shadow:15px 3px 0 #bbc4a5,32px -1px 0 #e0d4b9,48px 2px 0 #b5b99b,63px 0 0 #dfd3b5}
 .garden-frame[data-decoration="lantern"]{box-shadow:inset 0 1px 0 #b6c69e,0 5px 0 #244c34,0 0 27px #e5b1586b}.garden-frame[data-decoration="lantern"] .garden-edge:after{content:"";position:absolute;right:-7px;top:13px;width:10px;height:14px;border-radius:5px;background:#f7cf69;box-shadow:0 0 13px 5px #ffdf765b}
 .garden-frame[data-decoration="pond"]{border:3px solid #88c0b8;background:linear-gradient(135deg,#508671,#28594b)}.garden-frame[data-decoration="fireflies"]:after{border-color:#d5d8a366;background:radial-gradient(circle at 3% 40%,#ffeeb1 0 2px,transparent 4px),radial-gradient(circle at 97% 24%,#ffeeb1 0 2px,transparent 4px),radial-gradient(circle at 43% 98%,#fffac2 0 2px,transparent 4px),radial-gradient(circle at 23% 1%,#fffac2 0 2px,transparent 4px)}
+
+/* v9: column matches and bounded endless-stage navigation. */
+.plot.column-synergy{box-shadow:inset 2px 0 #ddb663,inset -2px 0 #ddb663,0 2px 0 #46623a66}
+.column-badge{position:absolute;top:3px;left:4px;font-size:10px;font-weight:800;line-height:1;color:#875c18;pointer-events:none}
+.garden-frame.overview .column-badge{font-size:7px;top:2px;left:2px}
+.stage-jump input{font:inherit;font-size:12px;flex:1;width:80px;min-width:0;min-height:44px;border:1px solid #d6cfb3;border-radius:10px;background:#fff9e8;color:var(--ink);padding:0 8px}
+.stage-jump #stage-go{font-size:11px;padding:0 9px}
+.stage-card>strong>span{max-width:calc(100% - 14px);overflow:hidden;text-overflow:ellipsis}
+.brand-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:165px}
+#combos{white-space:nowrap}
+.tile-reasons>div:has(.column-reason){background:#f4e7bd}
+@media(max-width:350px){.brand-sub{max-width:132px}.new-rules-link{font-size:9px}}
