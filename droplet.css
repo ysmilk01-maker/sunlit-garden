@@ -152,6 +152,14 @@ h1, h2, h3, p { margin: 0; }
 .growth-dots .filled, .growth-dots .grown, .growth-dots .on { background: #d86f51; border-color: #a94f3e; }
 .tile.planned { outline: 2px solid #b5efcc; outline-offset: -2px; }
 .tile.suggested:not(.planned) { outline: 2px solid #e2c775; outline-offset: -2px; }
+.tile.just-planted { outline: 2px solid #e8c67d; outline-offset: -2px; }
+.tile > svg { transform-origin: 50% 82%; }
+.planting-effect { position: absolute; inset: 0; z-index: 5; pointer-events: none; overflow: visible; }
+.planting-effect i { position: absolute; display: block; left: 50%; top: 74%; pointer-events: none; }
+.planting-seed { width: 8px; height: 12px; border-radius: 70% 35% 60% 40%; background: #865b30; box-shadow: inset 2px 1px 0 #c9a469; }
+.planting-soil { width: 52%; height: 14%; background: #765536; border-radius: 50%; }
+.soil-grain { width: 4px; height: 4px; background: #816038; border-radius: 40%; }
+.soil-grain:nth-of-type(even) { width: 3px; height: 3px; background: #ba9158; }
 .tile.active, .tile.grown { outline: 3px solid #fff1a3; outline-offset: -3px; }
 .tile.harvested { outline: 3px solid #f7cf79; outline-offset: -3px; }
 .tile.water-stop { outline: 2px dashed #b4e8d0; outline-offset: -4px; }
@@ -236,6 +244,7 @@ h1, h2, h3, p { margin: 0; }
 .setting-row strong { display: block; font-size: 12px; }
 .setting-row small { display: block; font-size: 10px; color: #768169; margin-top: 2px; line-height: 1.4; }
 .setting-row .toggle { flex-shrink: 0; font-size: 12px; font-weight: 750; }
+.setting-row .sound-preview { min-width: 44px; width: 44px; flex-shrink: 0; color: #355e43; font-size: 15px; }
 .setting-row .toggle[aria-checked="true"] { color: #fff9e9; background: #3b7456; border-color: #3b7456; }
 .setting-row input[type="range"] { max-width: 170px; min-width: 0; height: 44px; accent-color: #397b5d; }
 .volume-row { display: grid; grid-template-columns: 1fr auto; align-items: center; font-size: 11px; padding-top: 9px; }

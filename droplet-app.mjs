@@ -1,6 +1,7 @@
 import {PLANTS,GARDENS,STORAGE_KEY,newRun,place,undo,preview,water,advance,hydrate,serialize} from './droplet-core.mjs?v=20261013-10';
 import {plantArt} from './garden-art.mjs?v=20261013-8';
 import {createGardenMusic} from './garden-music.mjs?v=20261013-7';
+import {createDropletAudio} from './droplet-audio.mjs?v=20261013-10.1';
 
 const $=id=>document.getElementById(id);
 const PROFILE_KEY='sunlit-garden:droplet:profile:v1';
@@ -14,10 +15,11 @@ const dropIcon='<svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 2C10 8 
 let storage,rawRun=null;try{storage=window.localStorage;rawRun=storage.getItem(STORAGE_KEY);}catch{}
 let state=hydrate(rawRun)||newRun(1),profile=loadProfile();
 let damagedSave=rawRun!==null&&!hydrate(rawRun),saveFailed=false,selected=null,column=null,busy=false,homeVisible=true,lastTrigger=null,audioContext=null,skipRequested=false;
-let abortWait=null,activeAnimations=new Set(),helpPage=0;
+let abortWait=null,activeAnimations=new Set(),plantingEffect=null,helpPage=0;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
 const landscape=matchMedia('(orientation: landscape) and (pointer: coarse), (orientation: landscape) and (max-height: 600px) and (max-width: 1000px)');
 const music=createGardenMusic({audio:$('drop-bgm'),getContext:audio,enabled:profile.options.music,volume:profile.options.volume,onChange:musicStatus});
+const sfx=createDropletAudio({getContext:audio,isEnabled:()=>profile.options.sound,isHidden:()=>document.hidden||landscape.matches});
 const garden=()=>GARDENS.find(item=>item.id===state.stageId)||GARDENS[0];
 const goal=()=>garden().goal;
 const say=text=>{$('announcement').textContent=text;};
@@ -44,15 +46,11 @@ function save(){
   }catch{saveFailed=true;}
   statusText();return !saveFailed;
 }
-function statusText(){$('save-status').textContent=damagedSave?'저장된 정원을 읽지 못했어요 · 시작 화면에서 확인해 주세요':saveFailed?'저장 공간을 확인해 주세요 · 지금 정원은 창 안에 있어요':'이 브라우저에 자동 저장 · 기존 정원 기록도 그대로';}
+function statusText(){$('save-status').textContent=damagedSave?'저장된 정원을 읽지 못했어요 · 시작 화면에서 확인해 주세요':saveFailed?'저장 공간을 확인해 주세요 · 지금 정원은 창 안에 있어요':profile.options.sound?'이 브라우저에 자동 저장 · 기존 정원 기록도 그대로':'자동 저장 · 효과음 꺼짐 · 위의 ♪에서 켤 수 있어요';}
 function reconcileClear(){if(state.phase==='won'&&!profile.cleared.includes(state.stageId)){profile.cleared.push(state.stageId);profile.cleared.sort((a,b)=>a-b);}}
 function unlocked(id){return id===1||profile.cleared.includes(id-1)||profile.cleared.includes(id);}
 function audio(){audioContext??=new (window.AudioContext||window.webkitAudioContext)();return audioContext;}
 function gesture(){music.activate();}
-function note(pitch=440,duration=.12){
-  if(!profile.options.sound)return;
-  try{const ctx=audio();ctx.resume().catch(()=>{});const oscillator=ctx.createOscillator(),gain=ctx.createGain(),now=ctx.currentTime;oscillator.type='sine';oscillator.frequency.value=pitch;gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.045,now+.01);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start(now);oscillator.stop(now+duration+.02);}catch{}
-}
 function vibrate(pattern){if(profile.options.haptics&&navigator.vibrate)try{navigator.vibrate(pattern);}catch{}}
 function musicStatus(){const text=$('music-status');if(text){const s=music.getStatus().state;text.textContent=({playing:'BEATWAVE · James K',off:'음악 꺼짐',blocked:'재생 버튼을 눌러 주세요',error:'음악을 불러오지 못했어요',loading:'음악 준비 중',paused:'잠시 쉬는 중',idle:'재생 버튼을 누르면 시작해요'})[s]||'';}}
 
@@ -68,6 +66,7 @@ function renderWelcome(){
   $('welcome-diorama').innerHTML=`<span class="diorama-drop">${dropIcon}</span><span class="diorama-stem" aria-hidden="true"></span>${['sunflower','mint','strawberry'].map((type,i)=>`<span class="diorama-plant diorama-plant-${i}">${art({type,growth:1})}</span>`).join('')}<span class="diorama-caption">한 방울, 세 송이의 시작</span>`;
 }
 function render(){
+  clearPlanting();
   const activeId=document.activeElement?.id;
   $('welcome').hidden=!homeVisible;$('play').hidden=homeVisible;
   if(homeVisible){renderWelcome();statusText();return;}
@@ -159,14 +158,49 @@ function help(page=0){
   if($('help-back'))$('help-back').onclick=()=>help(0);$('help-next').onclick=()=>page?closeDialog():help(1);
 }
 function settings(){
-  gesture();openDialog('작은 정원의 소리',`<div class="setting-row"><span><strong>배경음악</strong><small id="music-status"></small></span><button id="music-toggle" class="toggle" role="switch" aria-label="배경음악" aria-checked="${profile.options.music}">${profile.options.music?'켜짐':'꺼짐'}</button></div><label class="volume-row" for="music-volume">음악 크기 <output id="volume-label">${Math.round(profile.options.volume*100)}%</output><input type="range" id="music-volume" min="0" max="100" value="${Math.round(profile.options.volume*100)}"></label><div class="setting-row"><span><strong>물방울·개화 효과음</strong><small>연쇄가 커질수록 소리도 올라가요</small></span><button id="effects-toggle" class="toggle" role="switch" aria-label="효과음" aria-checked="${profile.options.sound}">${profile.options.sound?'켜짐':'꺼짐'}</button></div><div class="setting-row"><span><strong>가벼운 진동</strong><small>${navigator.vibrate?'심기와 수확에 반응해요':'이 브라우저는 진동을 지원하지 않아요'}</small></span><button id="haptics-toggle" class="toggle" role="switch" aria-label="진동" aria-checked="${profile.options.haptics}" ${navigator.vibrate?'':'disabled'}>${profile.options.haptics?'켜짐':'꺼짐'}</button></div><div class="modal-actions"><button class="secondary" id="music-play">음악 재생</button><button class="primary" id="settings-done">정원으로</button></div>`,'settings');
-  for(const [id,key] of [['music-toggle','music'],['effects-toggle','sound'],['haptics-toggle','haptics']])$(id).onclick=()=>{profile.options[key]=!profile.options[key];$(id).setAttribute('aria-checked',String(profile.options[key]));$(id).textContent=profile.options[key]?'켜짐':'꺼짐';music.setPreferences({enabled:profile.options.music,volume:profile.options.volume});if(key==='music'&&profile.options.music)music.activate();if(key==='sound')note(659);save();};
+  gesture();openDialog('작은 정원의 소리',`<div class="setting-row"><span><strong>배경음악</strong><small id="music-status"></small></span><button id="music-toggle" class="toggle" role="switch" aria-label="배경음악" aria-checked="${profile.options.music}">${profile.options.music?'켜짐':'꺼짐'}</button></div><label class="volume-row" for="music-volume">음악 크기 <output id="volume-label">${Math.round(profile.options.volume*100)}%</output><input type="range" id="music-volume" min="0" max="100" value="${Math.round(profile.options.volume*100)}"></label><div class="setting-row"><span><strong>심기·물방울 효과음</strong><small>흙, 꽃, 벌, 수확의 작은 소리</small></span><button id="effects-preview" class="sound-preview" aria-label="효과음 켜고 미리듣기">▶</button><button id="effects-toggle" class="toggle" role="switch" aria-label="효과음" aria-checked="${profile.options.sound}">${profile.options.sound?'켜짐':'꺼짐'}</button></div><div class="setting-row"><span><strong>가벼운 진동</strong><small>${navigator.vibrate?'심기와 수확에 반응해요':'이 브라우저는 진동을 지원하지 않아요'}</small></span><button id="haptics-toggle" class="toggle" role="switch" aria-label="진동" aria-checked="${profile.options.haptics}" ${navigator.vibrate?'':'disabled'}>${profile.options.haptics?'켜짐':'꺼짐'}</button></div><div class="modal-actions"><button class="secondary" id="music-play">음악 재생</button><button class="primary" id="settings-done">정원으로</button></div>`,'settings');
+  for(const [id,key] of [['music-toggle','music'],['effects-toggle','sound'],['haptics-toggle','haptics']])$(id).onclick=()=>{profile.options[key]=!profile.options[key];$(id).setAttribute('aria-checked',String(profile.options[key]));$(id).textContent=profile.options[key]?'켜짐':'꺼짐';music.setPreferences({enabled:profile.options.music,volume:profile.options.volume});if(key==='music'&&profile.options.music)music.activate();if(key==='sound'){sfx.stop();if(profile.options.sound)sfx.play('bloom',{step:2});}save();};
+  $('effects-preview').onclick=()=>{gesture();profile.options.sound=true;$('effects-toggle').setAttribute('aria-checked','true');$('effects-toggle').textContent='켜짐';sfx.stop();sfx.play('plant');save();};
   $('music-volume').oninput=event=>{profile.options.volume=Number(event.target.value)/100;music.setPreferences({volume:profile.options.volume});$('volume-label').textContent=`${event.target.value}%`;save();};
   $('music-play').onclick=()=>{profile.options.music=true;$('music-toggle').setAttribute('aria-checked','true');$('music-toggle').textContent='켜짐';music.setPreferences({enabled:true});music.activate();save();};$('settings-done').onclick=closeDialog;musicStatus();
 }
 
 function wait(ms){return new Promise(resolve=>{const timer=setTimeout(()=>{abortWait=null;resolve();},ms);abortWait=()=>{clearTimeout(timer);abortWait=null;resolve();};});}
-function finishAnimation(){skipRequested=true;abortWait?.();for(const animation of activeAnimations)animation.cancel();activeAnimations.clear();$('particles').replaceChildren();}
+function finishAnimation(stopSound=true){skipRequested=true;abortWait?.();if(stopSound)sfx.stop();for(const animation of activeAnimations)animation.cancel();activeAnimations.clear();$('particles').replaceChildren();}
+function clearPlanting(){
+  if(!plantingEffect)return;
+  const effect=plantingEffect;plantingEffect=null;
+  for(const animation of effect.animations)animation.cancel();
+  effect.layer?.remove();effect.cell?.classList.remove('just-planted');
+}
+function plantFeedback(index,type){
+  clearPlanting();
+  const cell=$(`tile-${index}`),image=cell?.querySelector('svg');
+  if(!image?.animate||document.hidden)return;
+  const effect={cell,layer:null,animations:[]};plantingEffect=effect;
+  cell.classList.add('just-planted');
+  const run=(element,frames,options={})=>{
+    const animation=element.animate(frames,{duration:240,easing:'cubic-bezier(0.23, 1, 0.32, 1)',fill:'both',...options});
+    effect.animations.push(animation);animation.finished.catch(()=>{});return animation;
+  };
+  if(reduce.matches){
+    const fade=run(image,[{opacity:.65},{opacity:1}],{duration:160});
+    fade.finished.catch(()=>{}).finally(()=>{if(plantingEffect===effect)clearPlanting();});return;
+  }
+  const layer=document.createElement('span');layer.className='planting-effect';layer.setAttribute('aria-hidden','true');effect.layer=layer;
+  layer.innerHTML='<i class="planting-soil"></i><i class="planting-seed"></i>'+Array.from({length:5},()=>'<i class="soil-grain"></i>').join('');
+  cell.append(layer);
+  run(layer.querySelector('.planting-seed'),[{transform:'translate(-50%,-230%) rotate(-25deg)',opacity:1},{offset:.75,transform:'translate(-50%,-50%) rotate(15deg)',opacity:1},{transform:'translate(-50%,-20%) rotate(20deg)',opacity:0}],{duration:120});
+  run(layer.querySelector('.planting-soil'),[{transform:'translate(-50%,-50%) scale(.95)',opacity:0},{offset:.25,transform:'translate(-50%,-50%) scale(1)',opacity:.7},{transform:'translate(-50%,-50%) scale(1.08)',opacity:0}],{delay:60});
+  const size=cell.getBoundingClientRect().width;
+  const scatter=[[-.28,-.2],[-.17,-.34],[.02,-.38],[.21,-.3],[.3,-.12]];
+  layer.querySelectorAll('.soil-grain').forEach((grain,i)=>{
+    const [x,y]=scatter[i];
+    run(grain,[{transform:'translate(-50%,-50%)',opacity:0},{offset:.15,transform:'translate(-50%,-50%)',opacity:.85},{offset:.6,transform:`translate(${x*size}px,${y*size}px) rotate(${i*37}deg)`,opacity:.7},{transform:`translate(${x*size*1.1}px,${size*.03}px) rotate(${i*63}deg)`,opacity:0}],{duration:200,delay:80});
+  });
+  const rise=run(image,type==='hive'?[{transform:'translateY(-10%) scale(.95)',opacity:0},{offset:.7,transform:'translateY(2%) scale(1)',opacity:1},{transform:'translateY(0) scale(1)',opacity:1}]:[{transform:'translateY(14%) scale(.92)',opacity:0},{offset:.65,transform:'translateY(-3%) scale(1.03)',opacity:1},{transform:'translateY(0) scale(1)',opacity:1}],{duration:200,delay:100});
+  rise.finished.catch(()=>{}).finally(()=>{if(plantingEffect===effect)clearPlanting();});
+}
 function animate(element,frames,options){if(reduce.matches||skipRequested||!element?.animate)return;const a=element.animate(frames,{duration:200,easing:'cubic-bezier(0.23, 1, 0.32, 1)',...options});activeAnimations.add(a);a.finished.catch(()=>{}).finally(()=>activeAnimations.delete(a));return a;}
 function fly(event){
   if(event.to===null||!Number.isInteger(event.to))return;
@@ -179,7 +213,7 @@ function fly(event){
 async function playChain(before,result){
   const events=result.events||[],groups=[];
   for(const event of events){let group=groups.at(-1);if(!group||group.step!==event.step)groups.push(group={step:event.step,events:[]});group.events.push(event);}
-  const interval=Math.max(40,Math.min(125,3000/Math.max(1,groups.length))),pitches=[392,440,523,587,659,784,880,1047];let count=0;
+  const interval=Math.max(40,Math.min(125,3000/Math.max(1,groups.length)));let count=0;
   const visual=before.board.map(tile=>tile?{...tile}:null);
   drawPaths(result);$('water-paths').classList.add('running');
   for(const group of groups){
@@ -187,9 +221,10 @@ async function playChain(before,result){
     for(const event of group.events){
       const cell=Number.isInteger(event.index)?$(`tile-${event.index}`):null;
       if(event.kind==='flow'||event.kind==='bee')fly(event);
-      if(event.kind==='activate'&&cell){count++;cell.classList.add('active');animate(cell.querySelector('svg'),[{transform:'scale(.94)',opacity:.75},{transform:'scale(1.1)',opacity:1},{transform:'scale(1)',opacity:1}],{duration:240});note(pitches[Math.min(count-1,pitches.length-1)]);$('chain-preview').textContent=`${count}개가 이어서 깨어나요!`;}
-      if(event.kind==='grow'&&cell&&visual[event.index]){visual[event.index].growth=event.after;cell.classList.add('grown');const image=cell.querySelector('svg');if(image)image.outerHTML=art(visual[event.index]);cell.querySelector('.growth-dots i')?.classList.add('filled');}
-      if(event.kind==='harvest'&&cell){cell.classList.add('harvested');animate(cell.querySelector('svg'),[{transform:'translateY(0) scale(1)',opacity:1},{transform:'translateY(-18px) scale(.95)',opacity:0}],{duration:200});visual[event.index]=null;note(1047,.18);vibrate([10,25,15]);}
+      if(event.kind==='bee')sfx.play('bee');
+      if(event.kind==='activate'&&cell){count++;cell.classList.add('active');animate(cell.querySelector('svg'),[{transform:'scale(.94)',opacity:.75},{transform:'scale(1.1)',opacity:1},{transform:'scale(1)',opacity:1}],{duration:240});sfx.play('bloom',{step:count-1});$('chain-preview').textContent=`${count}개가 이어서 깨어나요!`;}
+      if(event.kind==='grow'&&cell&&visual[event.index]){visual[event.index].growth=event.after;cell.classList.add('grown');const image=cell.querySelector('svg');if(image)image.outerHTML=art(visual[event.index]);cell.querySelector('.growth-dots i')?.classList.add('filled');if(event.after<2)sfx.play('grow');}
+      if(event.kind==='harvest'&&cell){cell.classList.add('harvested');animate(cell.querySelector('svg'),[{transform:'translateY(0) scale(1)',opacity:1},{transform:'translateY(-18px) scale(.95)',opacity:0}],{duration:200});visual[event.index]=null;sfx.play('harvest');vibrate([10,25,15]);}
       if(event.kind==='break'&&event.reason==='empty'&&Number.isInteger(event.to))$(`tile-${event.to}`)?.classList.add('water-stop');
     }
     await wait(interval);
@@ -200,14 +235,15 @@ async function playChain(before,result){
 async function pour(){
   gesture();if(busy)return;if(state.phase!=='build'){showResult();return;}if(column===null)return;
   const before=state,next=water(state,column);if(next===state)return;
+  clearPlanting();sfx.stop();sfx.play('water');
   busy=true;skipRequested=false;selected=null;state=next;rawRun='started';reconcileClear();save();
   $('skip').hidden=false;$('water').disabled=true;$('undo').disabled=true;$('guide-copy').textContent='한 방울이 물길을 따라가요…';
   document.querySelectorAll('#watering-row button,#seeds button,#drop-board button,#go-home,#guide,#sound').forEach(button=>button.disabled=true);
   $('skip').focus();
   try{await playChain(before,state.lastResult);}finally{
-    finishAnimation();busy=false;$('go-home').disabled=false;$('guide').disabled=false;$('sound').disabled=false;column=null;render();
+    finishAnimation(false);busy=false;$('go-home').disabled=false;$('guide').disabled=false;$('sound').disabled=false;column=null;render();
     const r=state.lastResult;$('chain-preview').textContent=`${r.chain}개 연쇄 · 딸기 ${r.harvests}개 수확!`;$('path-note').textContent=r.harvests?'빈 땅에 새로운 연결을 심어 보세요':'다음 물주기를 준비해요';say(`${r.chain}개 연쇄, 딸기 ${r.harvests}개 수확. ${state.phase==='build'?state.turn+'번째 물주기입니다.':state.phase==='won'?'정원을 깨웠어요.':'다른 물길로 다시 도전해 보세요.'}`);
-    if(state.phase!=='build')showResult();else $('water-col-0').focus({preventScroll:true});
+    if(state.phase!=='build'){sfx.play(state.phase==='won'?'win':'loss');showResult();}else $('water-col-0').focus({preventScroll:true});
   }
 }
 
@@ -215,13 +251,14 @@ $('start').onclick=startGame;$('choose-garden').onclick=chooseGarden;
 $('go-home').onclick=()=>{if(busy)return;gesture();homeVisible=true;closeDialog();render();$('start').focus();};
 $('guide').onclick=()=>{gesture();help();};$('sound').onclick=settings;
 $('close-dialog').onclick=closeDialog;$('drop-dialog').addEventListener('cancel',()=>{});
-$('seeds').onclick=event=>{const button=event.target.closest('[data-seed]');if(!button||button.disabled||busy)return;gesture();selected=selected===button.dataset.seed?null:button.dataset.seed;render();note(440,.08);};
-$('drop-board').onclick=event=>{const button=event.target.closest('[data-index]');if(!button||button.disabled||busy)return;gesture();const index=Number(button.dataset.index);if(state.board[index]){tileInfo(index);return;}if(!selected){$('guide-copy').textContent='아래에서 씨앗을 하나 고른 뒤 이 칸에 심어요.';say('먼저 아래에서 씨앗을 골라 주세요.');return;}const next=place(state,index,selected);if(next===state)return;state=next;rawRun='started';selected=null;save();render();vibrate(8);note(523,.1);};
+$('seeds').onclick=event=>{const button=event.target.closest('[data-seed]');if(!button||button.disabled||busy)return;gesture();selected=selected===button.dataset.seed?null:button.dataset.seed;render();sfx.play('select');};
+$('drop-board').onclick=event=>{const button=event.target.closest('[data-index]');if(!button||button.disabled||busy)return;gesture();const index=Number(button.dataset.index);if(state.board[index]){tileInfo(index);return;}if(!selected){$('guide-copy').textContent='아래에서 씨앗을 하나 고른 뒤 이 칸에 심어요.';say('먼저 아래에서 씨앗을 골라 주세요.');return;}const plantedType=selected,next=place(state,index,selected);if(next===state)return;state=next;rawRun='started';selected=null;save();render();plantFeedback(index,plantedType);vibrate(8);sfx.play('plant');say(`${names[plantedType]}를 심었어요.`);};
 $('drop-board').addEventListener('keydown',event=>{const index=Number(event.target.closest('[data-index]')?.dataset.index),delta={ArrowLeft:-1,ArrowRight:1,ArrowUp:-4,ArrowDown:4}[event.key];if(!Number.isInteger(index)||!delta)return;const next=index+delta;if(next<0||next>15||Math.abs(delta)===1&&Math.floor(next/4)!==Math.floor(index/4))return;event.preventDefault();$(`tile-${next}`).focus();});
 $('watering-row').onclick=event=>{const button=event.target.closest('[data-column]');if(!button||button.disabled||busy)return;gesture();column=Number(button.dataset.column);selected=null;render();};
-$('undo').onclick=()=>{if(busy)return;gesture();state=undo(state);selected=null;save();render();};
+$('undo').onclick=()=>{if(busy)return;gesture();state=undo(state);selected=null;save();render();sfx.stop();sfx.play('undo');};
 $('water').onclick=pour;$('skip').onclick=finishAnimation;
-document.addEventListener('visibilitychange',()=>{music.setHidden(document.hidden);if(document.hidden&&busy)finishAnimation();});
-landscape.addEventListener?.('change',event=>{if(event.matches&&busy)finishAnimation();if(event.matches&&$('drop-dialog').open)closeDialog();});
-reduce.addEventListener?.('change',event=>{if(event.matches&&busy)finishAnimation();});
+document.addEventListener('visibilitychange',()=>{music.setHidden(document.hidden);if(document.hidden){sfx.stop();clearPlanting();if(busy)finishAnimation();}});
+landscape.addEventListener?.('change',event=>{if(event.matches){sfx.stop();clearPlanting();if(busy)finishAnimation();if($('drop-dialog').open)closeDialog();}});
+reduce.addEventListener?.('change',event=>{if(event.matches){clearPlanting();if(busy)finishAnimation();}});
+window.addEventListener('pagehide',()=>{sfx.stop();clearPlanting();});
 reconcileClear();render();
