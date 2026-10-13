@@ -110,3 +110,70 @@ body{background:#28483d url('./assets/garden-play-v6.webp') center/cover fixed}.
  .evolution-intro{font-size:10px;padding:6px;margin:6px 0}
 }
 @media(prefers-reduced-motion:reduce){.evolution-choice{transition:none}.evolution-choice:active,.evolution-choice:hover{transform:none}}
+
+/* v12: read the trade-off before committing a choice. */
+.game{grid-template-rows:62px 48px minmax(0,1fr) 30px 139px 48px}
+.game.has-seed-advice{grid-template-rows:62px 48px minmax(0,1fr) 30px auto 48px}
+.seed-cards{flex:none;min-height:89px}
+.seed-card{min-height:89px}
+.seed-card .seed-value{font-size:11px;font-weight:750;color:#365f43;margin-top:2px}
+.seed-card small{font-size:10px;line-height:1.3}
+.seed-strategy{background:#fffdf3;border:1px solid #c7cfaa;border-radius:12px;padding:0 10px 7px;color:#385440}
+.seed-strategy>div{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.seed-strategy strong{font-size:11px}.seed-strategy p{font-size:12px;line-height:1.45;margin:0 0 3px;word-break:keep-all}
+.seed-strategy>small{display:block;font-size:10px;color:#8a5c3d;line-height:1.45}
+.strategy-more{min-height:44px;padding:0 4px;color:#416746;background:transparent;font-size:11px;text-decoration:underline;text-underline-offset:3px}
+.seed-strategy-actions{display:flex;gap:8px}.seed-strategy-actions .strategy-more{min-width:44px}
+.home-sound{min-height:44px;border:1px solid #d5cfb8;border-radius:13px;background:#fff9eccc;font-size:12px;color:#506345}
+.home-sound[aria-pressed="false"]{background:#f3e5be;color:#755b2c}
+.sound-off{background:#f4e0b5!important}.icon-button>svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.home-panel{gap:8px}.home-note{margin:0}
+.seed-advice-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.seed-advice-top svg{width:66px;height:66px;flex:none}
+.seed-advice-top p{font-size:12px;line-height:1.55;margin:0;word-break:keep-all}
+.advice-numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;border-radius:12px;background:#e9efd7;padding:8px 12px;margin-bottom:10px}
+.advice-numbers>span{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.advice-numbers small{font-size:10px;color:#6c7957}.advice-numbers strong{font-size:23px;color:#2d654b;white-space:nowrap;font-variant-numeric:tabular-nums}
+.advice-numbers em{font-size:10px;font-style:normal;margin-inline-start:2px}.advice-numbers .loss{color:#a2513c}
+.strategy-lines p{margin:7px 0;font-size:13px;line-height:1.55;word-break:keep-all;color:#36583f}
+.strategy-lines b{font-size:11px;background:#e1e9ce;color:#496837;border-radius:5px;padding:2px 4px;margin-inline-end:5px;white-space:nowrap}
+.strategy-lines .strategy-watch{color:#805439}.strategy-watch b{color:#825c34;background:#f2e6c8}
+.advice-assumption{font-size:10px;line-height:1.4;color:#7e806d;text-align:center;margin:10px 0;word-break:keep-all}
+.seed-compare{display:flex;gap:7px}.seed-compare button{flex:1;min-height:44px;border-radius:11px;border:1px solid #d7d5bb;background:#f0efdb;font-size:12px}
+.seed-compare button[aria-pressed="true"]{background:#dfeace;border:2px solid #54774c;color:#2c593d;font-weight:750}
+.strategy-upgrades{display:grid;gap:7px;margin-bottom:8px}
+.strategy-upgrade{display:flex;align-items:center;text-align:left;gap:9px;padding:8px 10px;min-height:62px;border:1px solid #d6cfaf;border-radius:13px;background:#f6f4e4;color:#3b583f}
+.strategy-upgrade>span:first-child{font-size:22px;width:29px;flex:none;text-align:center}.strategy-upgrade>span:nth-child(2){flex:1;min-width:0}
+.strategy-upgrade strong{display:block;font-size:13px}.strategy-upgrade small{display:block;font-size:10px;margin-top:3px;line-height:1.35;color:#707759}
+.strategy-upgrade>b{font-size:18px;text-align:right;font-variant-numeric:tabular-nums}.strategy-upgrade>b small{font-weight:500;font-size:9px}
+.strategy-upgrade[aria-pressed="true"],.strategy-evolution[aria-pressed="true"]{background:#e6edcd;border-color:#456e44;box-shadow:inset 0 0 0 1px #456e44}
+.strategy-evolutions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:10px 0}
+.strategy-evolution{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;min-height:116px;border:1px solid #cdd2b0;background:linear-gradient(#fcf9e9,#e9efd8);border-radius:15px;padding:5px 6px 8px;color:#35543c}
+.strategy-evolution svg{width:69px;height:69px}.strategy-evolution strong{font-size:13px;line-height:1.3;word-break:keep-all}.strategy-evolution small{font-size:11px;line-height:1.4;font-variant-numeric:tabular-nums}
+.choice-explanation{padding:5px 11px;background:#fffdf5;border:1px solid #e1dcc6;border-radius:13px}
+.choice-explanation .advice-numbers{margin:0 -5px 4px;padding:6px 8px}.choice-explanation .advice-numbers strong{font-size:19px}
+.strategy-role{font-size:11px;font-weight:750;color:#7a7647;margin:3px 0}.choice-prompt{font-size:12px;line-height:1.7;color:#6a7758;text-align:center;margin:15px 0}
+.choice-confirm{width:100%;min-height:46px;margin-top:9px}
+.choice-actions{display:grid;grid-template-columns:minmax(0,1fr) 50px;gap:7px;margin-top:9px}.choice-actions .choice-confirm{margin:0}.choice-actions .secondary{min-width:44px;min-height:44px;padding:0 6px;font-size:12px}.rule-body{font-size:15px;line-height:1.75;word-break:keep-all;padding:10px 0}
+.strategy-reroll{display:flex;align-items:center;gap:8px;margin-top:9px}.strategy-reroll button{min-height:44px;padding:0 9px;font-size:11px;flex-shrink:0}.strategy-reroll small{font-size:10px;line-height:1.4;color:#807b60}
+.zoom-advice{width:100%;min-height:44px;font-size:10px;line-height:1.4;border:1px solid #ccd4b6;border-radius:10px;background:#eef1d9;padding:5px 8px;color:#466344;text-align:left;margin-top:6px}
+.zoom-advice strong{display:block;font-size:10px;color:#7d693b;margin-top:2px}
+.sound-samples{display:flex;align-items:center;gap:6px;margin:9px 0}.sound-samples label{font-size:10px;color:#667458}.sound-samples select{min-width:0;flex:1;min-height:44px;border:1px solid #c9ccb3;background:#fffcef;border-radius:9px;padding:0 5px;color:#476249;font-size:12px}.sound-samples button{min-height:44px;padding:0 9px;flex:none;font-size:11px}
+@media(max-height:700px) and (orientation:portrait){
+ .game{grid-template-rows:49px 40px minmax(0,1fr) 25px 125px 44px;gap:5px}
+ .game.has-seed-advice{grid-template-rows:49px 40px minmax(0,1fr) 25px auto 44px}
+ .game.has-seed-advice #seed-cards{display:none}
+ .seed-cards,.seed-card{min-height:73px}.seed-card svg{width:26px;height:26px}.seed-card strong{font-size:11px}.seed-card small{font-size:9px}.seed-card .seed-value{font-size:10px}
+ .seed-strategy{padding:0 8px 5px}.seed-strategy p{font-size:11px;line-height:1.35}.seed-strategy>small{font-size:10px;line-height:1.3}.seed-strategy strong{font-size:10px}
+ .home-panel{gap:6px;padding-inline:18px}.home-links button{min-height:48px}.home-play{min-height:48px}.home-visitor{top:49%}.home-note{display:none}
+ dialog[data-mode="evolution"],dialog[data-mode="upgrade"],dialog[data-mode="seed-advice"]{padding:12px 14px}
+ dialog[data-mode="evolution"] .sheet-heading,dialog[data-mode="upgrade"] .sheet-heading,dialog[data-mode="seed-advice"] .sheet-heading{margin-bottom:7px}
+ dialog[data-mode="evolution"] h2,dialog[data-mode="upgrade"] h2,dialog[data-mode="seed-advice"] h2{font-size:19px}
+ .evolution-picker{padding:3px 4px}.evolution-picker svg{width:32px;height:32px}
+ .strategy-evolutions{margin:7px 0;gap:7px}.strategy-evolution{min-height:94px;padding:3px 5px 6px}.strategy-evolution svg{width:49px;height:49px}.strategy-evolution strong{font-size:12px}.strategy-evolution small{font-size:10px}
+ .strategy-lines p{font-size:12px;line-height:1.4;margin:6px 0}.strategy-lines b{font-size:10px}.choice-explanation{padding:3px 8px}.strategy-role{font-size:10px}
+ .advice-assumption{font-size:9px;margin:6px 0}.choice-confirm{margin-top:6px;min-height:44px}.choice-prompt{margin:12px 0;font-size:11px}
+ .strategy-upgrade{min-height:50px;padding:5px 8px;gap:6px}.strategy-upgrade strong{font-size:12px}.strategy-upgrade small{font-size:10px}.strategy-upgrades{gap:5px;margin-bottom:7px}.strategy-upgrade>b{font-size:16px}
+ .strategy-reroll{margin-top:6px;gap:6px}.strategy-reroll small{font-size:9px}.advice-numbers{padding:6px 9px;margin-bottom:6px}.advice-numbers strong{font-size:20px}
+ .seed-advice-top svg{width:47px;height:47px}.seed-advice-top p{font-size:11px;line-height:1.45}.seed-advice-top{margin-bottom:6px}
+ .sound-samples label{display:none}.sound-samples{margin:6px 0}
+}
