@@ -1,0 +1,52 @@
+/* v15: put the condition and its reward beside the choice. */
+.game,.game.has-seed-advice{grid-template-rows:79px minmax(0,1fr) 205px 50px}
+.draft{grid-area:3/1/4/3;grid-template-rows:20px 100px 77px;gap:4px}
+.actions{grid-area:4/1/5/3}
+.draft-heading{gap:6px;display:flex;align-items:center}
+.draft-heading h3{font-size:11px;white-space:nowrap}
+.draft-heading>.forecast{grid-area:auto;display:flex;flex:1;justify-content:flex-end;gap:4px;min-height:0;padding:0;white-space:nowrap;font-size:10px;line-height:1.3}
+.draft-heading .forecast>strong{font-size:13px;letter-spacing:-.3px}
+.draft-heading .forecast strong small,.draft-heading #combos{display:none}
+.draft-heading #picks{font-size:9px;white-space:nowrap;margin-inline-start:3px}
+.topbar{padding-inline:10px;gap:3px}.brand,.brand>span:last-child{min-width:0}.brand-sub{max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.header-actions{flex-shrink:0;gap:0}
+.header-actions .mission-strip{width:44px;height:44px;flex-shrink:0;background:#ffffff08;border:0}.header-actions .mission-strip>img{height:38px;width:38px}
+.seed-cards,.game.has-seed-advice #seed-cards{height:100px;gap:7px}
+.seed-card{height:100px;padding:5px 5px 4px;display:grid;grid-template-columns:1fr;grid-template-rows:29px 15px 28px 16px;gap:0;text-align:center;align-content:center}
+.seed-head{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0}
+.seed-card .seed-art{width:30px;height:29px;flex-shrink:0}
+.seed-card .seed-art>.plant-art{width:34px;height:34px;max-width:none}
+.seed-card strong{font-size:12px}.seed-base{font-size:10px;line-height:15px;color:#66734f}
+.seed-condition{font-size:11px;font-weight:750;line-height:14px;color:#315a3f;display:flex;align-items:center;justify-content:center;word-break:keep-all;overflow-wrap:anywhere}
+.seed-potential{font-size:10px;line-height:16px;color:#36563c;background:#aec29d35;border-radius:5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.seed-potential b{font-size:12px}.seed-potential.loss,.seed-equation .loss{color:#b86545}
+.seed-card[aria-pressed="true"]{transform:none}.seed-card[aria-pressed="true"]:after{top:2px;right:2px;width:11px;height:11px;font-size:7px}
+.seed-strategy{min-height:0;height:100%;padding:4px 7px;background:#082a2270;border:1px solid #bcd29b33;border-radius:11px;gap:5px}
+.seed-strategy>.seed-summary-copy{align-self:center}.seed-summary-copy strong{font-size:12px;line-height:1.3;display:flex;gap:6px;flex-wrap:wrap}
+.seed-summary-copy .seed-equation{display:block;margin:4px 0 2px;color:#f3e7bf;font-size:11px;line-height:1.25;font-variant-numeric:tabular-nums}
+.seed-summary-copy .seed-applied{display:block;margin:0;color:#c6d4b7;font-size:10px;line-height:1.4;white-space:normal;overflow:visible;-webkit-line-clamp:unset}
+.seed-strategy .strategy-more{min-width:44px;min-height:44px;padding:0 5px;font-size:10px;background:#d2dbac13;color:#eee6bd;border:1px solid #d5dca72c}
+.tip{font-size:11px;line-height:1.55;border:1px dashed #c2d09c3a;border-radius:11px;padding:6px;align-self:stretch;display:grid;place-content:center;white-space:pre-line}
+.plot.preview-anchor{box-shadow:inset 0 0 0 2px #fff0ac,0 0 0 2px #92712e;z-index:2}.preview-label{font-size:8px}.preview-anchor .preview-label{font-weight:850;color:#364c29}
+/* The explanation is a small field guide with pages, not a long scroll. */
+.seed-guide-intro{display:flex;align-items:center;gap:10px;margin-bottom:8px}.seed-guide-intro>.plant-art{width:46px;height:46px;flex:none}.seed-guide-intro p{margin:0;font-size:12px;color:#52714a;line-height:1.5}.seed-guide-intro b{color:#31583c}
+.seed-guide-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:6px 0 10px}.seed-guide-tabs button{min-height:44px;padding:0 3px;background:#e6ebd2;border:1px solid #c9d3b1;border-radius:9px;font-size:11px;color:#526b43}.seed-guide-tabs button[aria-pressed="true"]{background:#2f6043;color:#fff1c9;border-color:#2f6043}
+.seed-rule-page{min-height:172px}.seed-rule{display:flex;gap:9px;align-items:start;padding:7px 0;border-bottom:1px solid #d9dfc5;font-size:12px;line-height:1.45}.seed-rule b{min-width:58px;color:#3b633f;flex:none}.seed-rule span{color:#557047}.seed-rule.negative span{color:#9c4e38}
+.seed-guide-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0}.seed-guide-nav button{min-height:44px;min-width:66px;padding:0 8px;font-size:11px;border-radius:9px;background:#e7ebd4;color:#466646}.seed-guide-nav span{font-size:10px;color:#6b7e58}
+.seed-calc-summary{font-size:11px;line-height:1.4;background:#e8edce;border-radius:9px;padding:7px 9px;margin:0 0 5px;color:#476a40}.seed-calc-summary strong{display:block;color:#2f583d;font-size:13px}
+.seed-guide-note{font-size:10px;line-height:1.45;color:#73835e;margin:6px 0}.seed-guide-compare{margin:8px 0 6px}
+.zoom-cards .seed-card{height:90px;min-height:90px;grid-template-rows:25px 13px 26px 14px;padding:3px}.zoom-cards .seed-art{width:25px;height:25px}.zoom-cards .seed-card .seed-art>.plant-art{width:28px;height:28px}.zoom-cards .seed-condition{font-size:10px;line-height:13px}.zoom-cards .seed-potential{font-size:9px;line-height:14px}.zoom-cards .seed-potential b{font-size:10px}
+@media(max-height:740px) and (orientation:portrait){
+ .game,.game.has-seed-advice{grid-template-rows:68px minmax(0,1fr) 185px 46px}
+ .draft{grid-template-rows:18px 96px 67px;gap:2px}.seed-cards,.game.has-seed-advice #seed-cards,.seed-card{height:96px}.seed-card{grid-template-rows:27px 14px 28px 15px}
+ .seed-card strong{font-size:11px}.seed-condition{font-size:10px}.seed-potential{font-size:9px;line-height:15px}.seed-potential b{font-size:11px}
+ .seed-summary-copy strong{font-size:11px}.seed-summary-copy .seed-equation{font-size:10px;margin:3px 0}.seed-summary-copy .seed-applied{font-size:10px}.tip{font-size:10px}
+}
+@media(max-height:590px) and (orientation:portrait){
+ .game,.game.has-seed-advice{grid-template-rows:70px minmax(0,1fr) 169px 44px}
+ .draft{grid-template-rows:18px 92px 55px;gap:2px}.seed-cards,.game.has-seed-advice #seed-cards,.seed-card{height:92px}
+ .seed-card{grid-template-rows:25px 13px 28px 14px;padding:4px}.seed-card .seed-art{width:27px;height:25px}.seed-card .seed-art>.plant-art{width:30px;height:30px}.seed-head{gap:1px}
+ .seed-card strong{font-size:11px}.seed-base{font-size:9px;line-height:13px}.seed-potential{font-size:9px;line-height:14px}.seed-potential b{font-size:10px}
+ .seed-strategy{padding:3px 5px}.seed-summary-copy strong{font-size:10px;line-height:1.2;gap:4px}.seed-summary-copy .seed-equation{font-size:10px;margin:2px 0;line-height:1.2}.seed-summary-copy .seed-applied{font-size:9px;line-height:1.3}.draft-heading h3{font-size:10px}.draft-heading>.forecast{font-size:9px}.draft-heading .forecast>strong{font-size:12px}
+ dialog[data-mode="seed-advice"]{padding:13px}.seed-guide-intro{gap:7px;margin-bottom:4px}.seed-guide-intro>.plant-art{width:32px;height:32px}.seed-guide-intro p{font-size:11px}.seed-guide-tabs{margin:5px 0;gap:4px}
+ .seed-rule-page{min-height:140px}.seed-rule{padding:5px 0;font-size:11px;line-height:1.4}.seed-rule b{min-width:50px}.seed-guide-note{margin:4px 0;font-size:9px}.seed-guide-nav{margin:4px 0}.seed-guide-compare{margin:5px 0}.seed-calc-summary{font-size:10px;padding:5px 7px}.seed-calc-summary strong{font-size:11px}
+}
