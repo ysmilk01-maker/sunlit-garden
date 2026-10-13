@@ -1,4 +1,6 @@
-import { SEEDS, newRun, stageFor, isStageId as validStageId, picksToday, plant, harvest, chooseUpgrade, sanitizeState, sanitizeCampaign } from './campaign-core.mjs?v=20261013-9';
+import {evolve,evolvableTiles,evolutionChoices} from './evolution-core.mjs?v=20261013-11';
+import {newRun as classicRun} from './campaign-core.mjs?v=20261013-9';
+import { SEEDS, newRun, stageFor, isStageId as validStageId, picksToday, plant, harvest, chooseUpgrade, sanitizeState, sanitizeCampaign } from './evolution-core.mjs?v=20261013-11';
 import { newRun as legacyRun } from './campaign-legacy-v7.mjs?v=20261013-9';
 import { newRun as previousRun } from './campaign-legacy-v8.mjs?v=20261013-9';
 
@@ -26,9 +28,10 @@ function firstOffers(state, day) {
   if (day === state.day && state.phase === 'plant' && state.placements === 0) return state.offers;
   const key = `${state.version}:${state.stageId}:${state.seed}:${day}`;
   if (firstOfferCache.has(key)) return firstOfferCache.get(key);
-  const createRun = state.version === 2 ? legacyRun : state.version === 3 ? previousRun : newRun;
+  const createRun = state.version === 2 ? legacyRun : state.version === 3 ? previousRun : state.version === 4 ? classicRun : newRun;
   let replay = createRun(state.seed, state.stageId);
   while (replay.day < day) {
+    if (replay.phase === 'evolve') { const index=evolvableTiles(replay)[0]; replay=evolve(replay,index,evolutionChoices(replay,index)[0].id); continue; }
     if (replay.phase === 'upgrade') { replay = chooseUpgrade(replay, replay.upgradeOffers[0]); continue; }
     while (replay.placements < picksToday(replay)) replay = plant(replay, replay.board.findIndex(tile => tile === null), replay.offers[0]);
     replay = harvest(replay);
@@ -41,7 +44,7 @@ function firstOffers(state, day) {
 
 export function missionFor(state, day = state?.day) {
   const stage = stageFor(state);
-  if (!stage || ![2, 3, 4].includes(state?.version) || !MISSION_DAYS.includes(day) || day > state.day || !Array.isArray(state.board) || state.board.length !== stage.cols * stage.rows) return null;
+  if (!stage || ![2, 3, 4, 5].includes(state?.version) || !MISSION_DAYS.includes(day) || day > state.day || !Array.isArray(state.board) || state.board.length !== stage.cols * stage.rows) return null;
   const sameDayHistory = day === state.day ? state.history?.[0] : null;
   const startBoard = sameDayHistory?.board || state.board.map(tile => tile && tile.type !== 'well' && tile.plantedDay >= day ? null : tile);
   const todayBoard = state.board.map(tile => tile && tile.type !== 'well' && tile.plantedDay > day ? null : tile);
@@ -76,7 +79,7 @@ export function missionFor(state, day = state?.day) {
 }
 
 export function newProfile() {
-  return { version: 1, petals: 0, claimedMissions: [], claimedHarvests: [], clearedStages: [], stageStars: {}, selectedDecoration: null, options: { sound: false, haptics: true, music: true, musicVolume: 0.3 } };
+  return { version: 1, petals: 0, claimedMissions: [], claimedHarvests: [], clearedStages: [], stageStars: {}, selectedDecoration: null, options: { sound: true, haptics: true, music: true, musicVolume: 0.3 } };
 }
 export function sanitizeProfile(input) {
   try {

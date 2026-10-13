@@ -2,17 +2,17 @@
 <html lang="ko">
 <head>
 <meta name="robots" content="noindex,nofollow">
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#183f32"><meta name="description" content="세 가지 씨앗 중 하나를 골라, 일곱 날 동안 나만의 조합을 키우는 작은 정원 게임."><title>햇빛정원 — 끝없이 자라는 정원</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#183f32"><meta name="description" content="세 가지 씨앗 중 하나를 골라, 일곱 날 동안 나만의 조합을 키우는 작은 정원 게임."><title>햇빛정원 — 내 식물이 진화하는 정원</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2324553a'/%3E%3Cpath d='M32 49V24M32 35C12 35 13 14 13 14C33 14 32 35 32 35ZM32 29C52 29 51 8 51 8C31 8 32 29 32 29Z' fill='%23f7f0df' stroke='%23f7f0df' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="./styles.css?v=20261013-5">
-<link rel="stylesheet" href="./experience.css?v=20261013-9">
+<link rel="stylesheet" href="./experience.css?v=20261013-11">
 <link rel="preload" as="image" href="./assets/garden-home-v6.webp">
 </head>
 <body>
 <main class="app">
   <section id="home-screen" class="home-screen" aria-label="햇빛정원 시작 화면">
-    <div class="home-sky"><span class="home-kicker">조금씩 자라는 나만의 작은 세계</span><h1>햇빛<span>정원</span><i aria-hidden="true">✿</i></h1><p>작은 씨앗 하나로,<br>오늘을 초록빛으로.</p></div>
-    <a class="home-visitor" href="./droplet.html?v=20261013-10.1" style="color:inherit;text-decoration:none;min-height:44px"><span aria-hidden="true">✦</span> 새 이야기 · 한 방울의 정원 ↗</a>
+    <div class="home-sky"><span class="home-kicker">조금씩 자라는 나만의 작은 세계</span><h1>햇빛<span>정원</span><i aria-hidden="true">✿</i></h1><p>같은 씨앗도, 다른 미래로.<br>이번엔 어떤 정원을 키울까요?</p></div>
+    <button class="home-visitor" id="home-preview"><span aria-hidden="true">✦</span> 같은 씨앗, 두 가지 진화 ↗</button>
     <div class="home-panel"><div class="home-stats" id="home-stats"></div><button id="home-play" class="primary home-play">정원 열기 <span aria-hidden="true">↗</span></button><div class="home-links"><button id="home-stages"><span aria-hidden="true">⌘</span>정원의 길</button><button id="home-collection"><span aria-hidden="true">✿</span>꾸미기 수첩</button><button id="home-settings"><span aria-hidden="true">☷</span>음악·설정</button></div><button id="home-new-rules" class="new-rules-link" hidden>새 규칙으로 시작 · 세로열 보너스와 높은 목표 ↗</button><p class="home-note">서두르지 않아도 괜찮아요. 당신의 속도로.</p></div>
   </section>
   <header class="topbar"><button id="home-button" class="brand stage-button" aria-label="시작 화면" aria-haspopup="dialog"><span class="brand-mark" aria-hidden="true">✿</span><span><span class="brand-title">햇빛정원</span><span id="stage-label" class="brand-sub">1단계 · ∞</span></span></button><div class="header-actions"><button id="stage-button" class="icon-button" aria-label="단계 선택" aria-haspopup="dialog">⌘</button><button id="help" class="icon-button" aria-label="놀이 방법과 식물 도감" aria-haspopup="dialog">?</button><button id="settings" class="icon-button" aria-label="배경음악과 소리 설정" aria-haspopup="dialog">☷</button></div></header>
@@ -31,5 +31,5 @@
 <dialog id="sheet" aria-labelledby="sheet-title"><div class="sheet-heading"><div><p id="sheet-eyebrow" class="eyebrow"></p><h2 id="sheet-title"></h2></div><button id="close-sheet" class="icon-button" aria-label="닫기">×</button></div><div id="sheet-content"></div></dialog>
 <div class="orientation-notice" role="status"><div><span class="phone" aria-hidden="true">✿</span><p class="eyebrow">햇빛정원</p><h2>화면을 세워 주세요</h2><p>세로 화면에서 정원을 이어서 키울 수 있어요.</p></div></div>
 <audio id="garden-bgm" src="./assets/audio/beatwave-bgm.mp3" preload="none" loop playsinline hidden></audio>
-<script type="module" src="./experience-app.mjs?v=20261013-9"></script>
+<script type="module" src="./experience-app.mjs?v=20261013-11"></script>
 </body></html>
