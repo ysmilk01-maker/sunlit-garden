@@ -1,4 +1,15 @@
 /* The little world around the puzzle, v6. */
+/* v7: independently saved music and effects; music gain works through Web Audio. */
+.music-settings{background:#edf0d9;border-radius:15px;padding:0 11px 3px}
+.music-settings .music-row{padding:9px 0 3px;border:0;min-height:66px}
+.music-volume-row{display:flex;align-items:center;gap:9px;min-height:44px;font-size:10px;color:#697951}
+.music-volume-row input{flex:1;min-width:0;min-height:44px;margin:0;accent-color:#39734d;cursor:pointer}
+.music-volume-row output{width:31px;text-align:right;font-variant-numeric:tabular-nums}
+.music-retry{width:100%;margin:3px 0 7px;min-height:44px}
+dialog[data-mode="settings"] .setting-row{min-height:66px;padding:8px 0}
+dialog[data-mode="settings"] .settings-sample{margin-top:10px}
+dialog[data-mode="settings"] .sheet-note{margin-top:10px;padding-top:8px;font-size:9px}
+@media(max-height:650px) and (orientation:portrait){dialog[data-mode="settings"]{padding:13px 16px}dialog[data-mode="settings"] .sheet-heading{margin-bottom:8px}dialog[data-mode="settings"] .sheet-heading h2{font-size:19px}dialog[data-mode="settings"] .setting-row{min-height:58px;padding:6px 0}dialog[data-mode="settings"] .setting-row strong{font-size:12px;margin-bottom:2px}dialog[data-mode="settings"] .setting-row small{font-size:9px}dialog[data-mode="settings"] .sheet-actions{margin-top:9px}}
 /* Leave the bottom controls above the iPhone home indicator. */
 .home-panel{padding-bottom:max(17px,env(safe-area-inset-bottom))!important}
 .zoom-zones.single-zone{grid-template-columns:1fr;grid-template-rows:1fr}

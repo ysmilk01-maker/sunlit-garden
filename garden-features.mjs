@@ -13,6 +13,7 @@ const CLEAR_REWARD = 3;
 const MISSION_DAYS = [2, 4, 6];
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const validMusicVolume = value => Number.isFinite(value) && value >= 0 && value <= 1;
 const adjacent = (index, cols, rows) => [index - cols, index + cols, ...(index % cols ? [index - 1] : []), ...(index % cols < cols - 1 ? [index + 1] : [])].filter(i => i >= 0 && i < cols * rows);
 const firstOfferCache = new Map();
 
@@ -72,7 +73,7 @@ export function missionFor(state, day = state?.day) {
 }
 
 export function newProfile() {
-  return { version: 1, petals: 0, claimedMissions: [], claimedHarvests: [], clearedStages: [], stageStars: {}, selectedDecoration: null, options: { sound: false, haptics: true } };
+  return { version: 1, petals: 0, claimedMissions: [], claimedHarvests: [], clearedStages: [], stageStars: {}, selectedDecoration: null, options: { sound: false, haptics: true, music: true, musicVolume: 0.3 } };
 }
 export function sanitizeProfile(input) {
   try {
@@ -98,7 +99,11 @@ export function sanitizeProfile(input) {
     }
     if (input.clearedStages.some(id => !own(stageStars, id)) || input.petals !== input.claimedMissions.length * MISSION_REWARD + input.clearedStages.length * CLEAR_REWARD) return null;
     if (input.selectedDecoration !== null && (!own(DECORATIONS, input.selectedDecoration) || DECORATIONS[input.selectedDecoration].threshold > input.petals)) return null;
-    return { version: 1, petals: input.petals, claimedMissions: [...input.claimedMissions], claimedHarvests: [...input.claimedHarvests], clearedStages: [...input.clearedStages], stageStars, selectedDecoration: input.selectedDecoration, options: { sound: input.options.sound, haptics: input.options.haptics } };
+    // Music settings were added after v6 shipped. Repair only these optional fields
+    // so an old or malformed audio preference never discards earned progress.
+    const music = typeof input.options.music === 'boolean' ? input.options.music : true;
+    const musicVolume = validMusicVolume(input.options.musicVolume) ? input.options.musicVolume : 0.3;
+    return { version: 1, petals: input.petals, claimedMissions: [...input.claimedMissions], claimedHarvests: [...input.claimedHarvests], clearedStages: [...input.clearedStages], stageStars, selectedDecoration: input.selectedDecoration, options: { sound: input.options.sound, haptics: input.options.haptics, music, musicVolume } };
   } catch { return null; }
 }
 export function starsFor(state) {
@@ -156,7 +161,8 @@ export function selectDecoration(profile, id) {
 export function setOptions(profile, patch) {
   const valid = sanitizeProfile(profile); if (!valid || !patch || typeof patch !== 'object') return profile;
   const options = { ...valid.options };
-  for (const key of ['sound', 'haptics']) if (own(patch, key) && typeof patch[key] === 'boolean') options[key] = patch[key];
+  for (const key of ['sound', 'haptics', 'music']) if (own(patch, key) && typeof patch[key] === 'boolean') options[key] = patch[key];
+  if (own(patch, 'musicVolume') && validMusicVolume(patch.musicVolume)) options.musicVolume = patch.musicVolume;
   return equal(options, valid.options) ? profile : { ...valid, options };
 }
 export function summaryFor(profile, campaign) {
