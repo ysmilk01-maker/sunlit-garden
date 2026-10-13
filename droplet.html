@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#204d3b">
+  <meta name="description" content="물 한 방울로 깨우는 작은 정원. 씨앗을 심고 물길을 연결하는 햇빛정원 새 실험판.">
+  <title>한 방울의 정원 — 햇빛정원</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2324553a'/%3E%3Cpath d='M32 9C29 18 15 30 15 40a17 17 0 0034 0C49 30 35 18 32 9Z' fill='%2377d6c7'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./droplet.css?v=20261013-10">
+  <link rel="preload" as="image" href="./assets/garden-home-v6.webp">
+</head>
+<body>
+<main class="drop-app">
+  <section id="welcome" class="welcome" aria-label="한 방울의 정원 시작 화면">
+    <div class="welcome-copy"><p class="kicker">햇빛정원 · 새 이야기</p><h1>한 방울의<br><em>정원</em><span aria-hidden="true">✦</span></h1><p>씨앗으로 길을 만들고,<br>한 방울로 모두 깨워요.</p></div>
+    <div class="welcome-diorama" id="welcome-diorama" aria-hidden="true"></div>
+    <div class="welcome-panel"><p class="welcome-status" id="welcome-status">작은 선택이 큰 연쇄가 되는 곳</p><button id="start" class="primary">첫 물방울 떨어뜨리기 <span aria-hidden="true">↗</span></button><button id="choose-garden" class="secondary">세 정원 둘러보기</button><a href="./?v=20261013-9" class="classic-link">기존 햇빛정원 이어하기 →</a><small>한 손으로 · 시간 제한 없이 · 자동 저장</small></div>
+  </section>
+  <section id="play" class="play-screen" aria-label="물길을 설계하는 정원" hidden>
+    <header class="play-header"><button id="go-home" class="icon-button" aria-label="시작 화면으로">‹</button><div class="chapter-label"><small id="chapter-name">첫 물방울</small><h1>한 방울의 정원</h1></div><button id="guide" class="icon-button" aria-label="식물과 놀이 방법">?</button><button id="sound" class="icon-button" aria-label="음악과 소리 설정">♪</button></header>
+    <div class="goal-panel"><div class="day-line"><span id="turn-label">1번째 물주기</span><span id="turn-dots" aria-hidden="true"></span></div><div class="goal-counters"><div id="harvest-goal" class="goal-pill"></div><div id="chain-goal" class="goal-pill"></div></div></div>
+    <div class="guide-strip"><img src="./assets/bunny-guide-v6.webp" alt="" width="40" height="40"><span id="guide-copy">씨앗을 놓아 물길을 연결해요.</span></div>
+    <div class="board-area"><div class="watering-row" id="watering-row" aria-label="물을 줄 열 선택"></div><div class="board-wrap" id="board-wrap"><div id="drop-board" class="drop-board" aria-label="4행 4열 정원"></div><svg id="water-paths" class="path-overlay" viewBox="0 0 400 400" aria-hidden="true"></svg><div id="particles" class="particles" aria-hidden="true"></div></div><div class="chain-readout"><span id="chain-preview">↑ 물을 줄 열을 골라요</span><small id="path-note">선택하면 물길을 볼 수 있어요</small></div></div>
+    <div class="seed-tray"><div class="tray-heading"><h2 id="tray-title">무엇을 심을까요?</h2><span id="placements">두 번 심을 수 있어요</span></div><div id="seeds" class="seed-options" aria-label="씨앗 고르기"></div></div>
+    <div class="action-row"><button id="undo" class="secondary icon-button" aria-label="마지막 심기 되돌리기" disabled>↶</button><button id="water" class="primary" disabled>물을 줄 열을 골라요</button><button id="skip" class="secondary" hidden>바로 보기 ›</button></div>
+    <p id="save-status" class="save-status">이 브라우저에 자동 저장돼요</p>
+  </section>
+  <div id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+</main>
+<dialog id="drop-dialog" aria-labelledby="dialog-title"><div class="dialog-head"><h2 id="dialog-title"></h2><button id="close-dialog" class="icon-button" aria-label="닫기">×</button></div><div id="dialog-content"></div></dialog>
+<div class="orientation-notice" role="status"><div><span aria-hidden="true">♧</span><h2>화면을 세워 주세요</h2><p>작은 정원은 세로로 자라요.<br>진행 중인 정원은 그대로 있어요.</p></div></div>
+<audio id="drop-bgm" src="./assets/audio/beatwave-bgm.mp3" preload="none" loop playsinline hidden></audio>
+<script type="module" src="./droplet-app.mjs?v=20261013-10"></script>
+</body>
+</html>
