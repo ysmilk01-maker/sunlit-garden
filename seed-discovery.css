@@ -1,0 +1,179 @@
+/* v19 · First meeting with a seed. This file styles only this dialog mode.
+ * Progress shares the illustration row. Text is never clamped or ellipsized.
+ * With a one-line heading, six 18px trait text lines, one-line growth/note,
+ * and both 44px actions, the declared outer-height budget is 427px (403px small).
+ * Actual font wrapping and browser layout still require viewport verification.
+ */
+dialog[data-mode="seed-discovery"]{
+  width:calc(100% - 24px);
+  max-width:380px;
+  max-height:min(530px,calc(100dvh - 24px));
+  padding:12px;
+  border-color:#f5d797;
+  border-radius:24px;
+  background:var(--festival-paper,#fff9ee);
+  color:var(--festival-ink,#183e46);
+  overflow:hidden;
+}
+dialog[data-mode="seed-discovery"] .sheet-heading{
+  min-height:44px;
+  margin-bottom:4px;
+  gap:8px;
+  align-items:center;
+}
+dialog[data-mode="seed-discovery"] .sheet-heading>div{min-width:0}
+dialog[data-mode="seed-discovery"] .sheet-heading .eyebrow{
+  margin:0 0 3px;
+  font-size:9px;
+  line-height:12px;
+  color:#78561e;
+}
+dialog[data-mode="seed-discovery"] .sheet-heading h2{
+  margin:0;
+  font-size:23px;
+  line-height:28px;
+  letter-spacing:-.5px;
+  color:var(--festival-ink,#183e46);
+}
+dialog[data-mode="seed-discovery"] .sheet-heading .icon-button{
+  flex:none;
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px;
+  background:#e5eee8;
+  color:#285650;
+}
+dialog[data-mode="seed-discovery"] #sheet-content{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:4px;
+  min-width:0;
+}
+dialog[data-mode="seed-discovery"] .discovery-progress{
+  grid-area:1/1;
+  align-self:start;
+  justify-self:end;
+  z-index:1;
+  margin:0;
+  padding:3px 8px;
+  border-radius:20px;
+  background:#ebe0fa;
+  color:var(--festival-evolution-ink,#543487);
+  font-size:11px;
+  line-height:16px;
+  font-weight:750;
+  font-variant-numeric:tabular-nums;
+}
+dialog[data-mode="seed-discovery"] .discovery-art{
+  grid-area:1/1;
+  display:grid;
+  place-items:center;
+  min-width:0;
+  height:120px;
+  margin:0;
+  border-radius:20px;
+  background:radial-gradient(ellipse at 39% 45%,#ffdda76b,transparent 48%),radial-gradient(ellipse at 66% 60%,#d9c2ff57,transparent 45%),radial-gradient(ellipse at 50% 80%,#b9f2d642,transparent 54%);
+}
+dialog[data-mode="seed-discovery"] .discovery-art :is(svg,img.plant-art){
+  display:block;
+  width:120px;
+  height:120px;
+  max-width:100%;
+  object-fit:contain;
+  filter:drop-shadow(0 5px 3px #33554926);
+}
+dialog[data-mode="seed-discovery"] .discovery-basic{
+  justify-self:center;
+  margin:0;
+  padding:3px 11px;
+  border-radius:20px;
+  background:#ffebbb;
+  color:var(--festival-primary-ink,#3a2b16);
+  font-size:12px;
+  line-height:18px;
+  font-weight:800;
+  text-align:center;
+}
+dialog[data-mode="seed-discovery"] .discovery-traits{
+  display:grid;
+  gap:3px;
+  margin:0;
+  min-width:0;
+}
+dialog[data-mode="seed-discovery"] .discovery-traits p{
+  position:relative;
+  margin:0;
+  padding:0 0 0 11px;
+  color:var(--festival-ink,#183e46);
+  font-size:13px;
+  line-height:18px;
+  font-weight:650;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+dialog[data-mode="seed-discovery"] .discovery-traits p:before{
+  content:"";
+  position:absolute;
+  top:6px;
+  left:0;
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#399879;
+}
+dialog[data-mode="seed-discovery"] .discovery-traits p:nth-child(2):before{background:#9d71c7}
+dialog[data-mode="seed-discovery"] .discovery-traits p:nth-child(3):before{background:#dc8b36}
+dialog[data-mode="seed-discovery"] .discovery-growth{
+  margin:0;
+  color:var(--festival-success-ink,#185139);
+  font-size:11px;
+  line-height:17px;
+  font-weight:650;
+  text-align:center;
+  word-break:keep-all;
+}
+dialog[data-mode="seed-discovery"] .discovery-note{
+  margin:0;
+  color:var(--festival-ink-muted,#4b6361);
+  font-size:10px;
+  line-height:14px;
+  text-align:center;
+  word-break:keep-all;
+}
+dialog[data-mode="seed-discovery"] .discovery-actions{
+  display:grid;
+  grid-template-columns:minmax(76px,.85fr) minmax(0,1.55fr);
+  gap:8px;
+  margin:0;
+  min-width:0;
+}
+dialog[data-mode="seed-discovery"] .discovery-actions button{
+  min-width:44px;
+  min-height:44px;
+  padding:0 9px;
+  border-radius:12px;
+  font-size:12px;
+  line-height:18px;
+  font-weight:750;
+}
+dialog[data-mode="seed-discovery"] .discovery-actions .secondary{
+  background:#e6f1e9;
+  border-color:#b3d1be;
+  color:#315b4c;
+}
+dialog[data-mode="seed-discovery"] .discovery-actions .primary{
+  background:linear-gradient(130deg,var(--festival-primary,#ffd36a),var(--festival-primary-shade,#ffb94f));
+  color:var(--festival-primary-ink,#3a2b16);
+  box-shadow:inset 0 1px #fff3c6,0 2px 0 #a86b26;
+}
+dialog[data-mode="seed-discovery"] button:focus-visible{
+  outline:2px solid var(--festival-focus-ink,#155561);
+  outline-offset:-2px;
+}
+@media(max-height:650px),(max-width:350px){
+  dialog[data-mode="seed-discovery"] .discovery-art,
+  dialog[data-mode="seed-discovery"] .discovery-art :is(svg,img.plant-art){height:96px}
+  dialog[data-mode="seed-discovery"] .discovery-art :is(svg,img.plant-art){width:96px}
+  dialog[data-mode="seed-discovery"] .sheet-heading h2{font-size:21px;line-height:28px}
+}

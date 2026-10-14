@@ -1,6 +1,6 @@
 # 햇빛정원 · 식물의 두 번째 모습
 
-[햇빛정원 v18 테스트 플레이](https://ysmilk01-maker.github.io/sunlit-garden/?v=20261014-18)
+[햇빛정원 v19 테스트 플레이](https://ysmilk01-maker.github.io/sunlit-garden/?v=20261014-19)
 
 로그인 없이 실행하는 세로 화면 정원 게임입니다. 씨앗을 고르고 배치한 뒤, 7일 동안 수확하며 다음 정원으로 나아갑니다. 원래 캠페인에 식물 진화 선택을 추가한 테스트판입니다.
 
@@ -12,11 +12,20 @@
 - BGM **BEATWAVE · James K**, 효과음, 음악 크기 설정을 제공합니다. 첫 버튼을 누른 뒤 음악이 시작되며 기존 소리 설정을 유지합니다.
 - 세로 화면 전용입니다. 가로로 돌리면 화면을 세우는 안내가 나타납니다. iPhone Safari는 진동을 지원하지 않습니다.
 
+## v19 처음 만나는 씨앗
+
+정원을 시작할 때 처음 만나는 씨앗의 기본 수확·효과·성장 조건을 한 종류씩 소개합니다.
+
+- **확인** 버튼으로 읽은 씨앗만 같은 브라우저에 기록합니다. 다음 라운드부터 이미 확인한 씨앗은 다시 소개하지 않고, 새로 열린 씨앗만 보여 줍니다.
+- **나중에 보기·닫기(X)·Escape**로 넘기면 읽음 처리하지 않습니다. 다음에 정원을 열 때 다시 볼 수 있습니다.
+- 평소 씨앗 선택은 팝업 없이 화면 안에서 특성을 확인하고 바로 심는 흐름을 유지합니다.
+- 읽음 기록은 게임 진행·캠페인·프로필과 별도로 저장합니다. 브라우저 데이터를 삭제하거나 저장이 제한된 환경에서는 기록이 유지되지 않을 수 있습니다.
+
+관련 자동 테스트 38개와 로컬 Chromium 화면 검사 29개를 확인했습니다. 320×568·390×844 화면, 읽음 확인·건너뛰기·새로고침·새 씨앗 해금·Escape 동작을 검사했습니다. **실제 iPhone Safari에서는 아직 검증하지 않았습니다.**
+
 ## v18 색상과 시각 효과
 
 정원 화면의 색상을 짙은 청록·금빛 중심으로 바꾸고, 심기·진화·수확·성장 선택의 시각 피드백을 보강했습니다. 기존 점수 코어·성장 규칙·저장·이미지·음원은 유지합니다. 모션 감소 설정과 화면을 숨길 때의 연출 정리를 지원합니다.
-
-**v18 브라우저 화면과 실제 모바일·iPhone 동작은 검증하지 못했습니다.** 이번 작업에서는 브라우저 연결을 사용할 수 없어 코드·자동 테스트 및 공개 파일 전달 상태를 확인했습니다. 이전 v17 화면 검사 결과를 v18 검사 결과로 간주하지 않습니다.
 
 ## 화면에서 바로 보는 선택 효과
 
@@ -68,6 +77,6 @@ python -m http.server 8796 --bind 127.0.0.1
 
 같은 컴퓨터에서 `http://127.0.0.1:8796/`을 엽니다. 다른 기기에서는 위 공개 테스트 링크를 사용합니다.
 
-현재 화면은 `experience-app.mjs`와 `atelier.css`, v18 색상과 효과 스타일은 `festival.css`와 `festival-effects.css`, 목표와 배치 강조 표시 보조 함수는 `garden-journey.mjs`, 진화 규칙은 `evolution-core.mjs`, 이미지 연결과 복구는 `garden-sprites.mjs`, 기존 진화 그림은 `evolution-art.mjs`, 짧은 심기·진화 연출은 `garden-feedback.mjs`를 사용합니다. 씨앗 점수 설명은 `seed-explainer.mjs`, 씨앗·능력 효과 문구는 `choice-copy.mjs`, 선택 화면 스타일은 `seed-choice.css`, 강화·진화 설명은 `garden-strategy.mjs`, 효과음은 `garden-audio.mjs`를 사용합니다. 기존 `campaign-core.mjs`와 이전 규칙 모듈은 저장 호환성을 위해 유지합니다.
+현재 화면은 `experience-app.mjs`와 `atelier.css`, v18 색상과 효과 스타일은 `festival.css`와 `festival-effects.css`, 목표와 배치 강조 표시 보조 함수는 `garden-journey.mjs`, 진화 규칙은 `evolution-core.mjs`, 이미지 연결과 복구는 `garden-sprites.mjs`, 기존 진화 그림은 `evolution-art.mjs`, 짧은 심기·진화 연출은 `garden-feedback.mjs`를 사용합니다. 첫 씨앗 소개와 읽음 기록은 `seed-discovery.mjs`, 소개 화면 스타일은 `seed-discovery.css`, 씨앗 점수 설명은 `seed-explainer.mjs`, 씨앗·능력 효과 문구는 `choice-copy.mjs`, 선택 화면 스타일은 `seed-choice.css`, 강화·진화 설명은 `garden-strategy.mjs`, 효과음은 `garden-audio.mjs`를 사용합니다. 기존 `campaign-core.mjs`와 이전 규칙 모듈은 저장 호환성을 위해 유지합니다.
 
 원본 게임 로직과 디자인 및 오디오 자산은 나인투식스랩의 프로젝트 자산입니다. 별도 이용 허가를 부여하지 않습니다.
