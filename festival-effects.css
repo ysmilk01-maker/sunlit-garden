@@ -1,0 +1,61 @@
+/* v18: local, non-blocking flower confetti. Timing is owned by garden-feedback. */
+.garden-festival {
+  position: absolute;
+  inset: 0;
+  z-index: 14;
+  pointer-events: none;
+  overflow: visible;
+  border-radius: inherit;
+}
+.garden-festival > i {
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: center;
+}
+.garden-festival--evolve > i { top: 48%; }
+.garden-festival--celebrate { overflow: hidden; }
+.garden-festival--celebrate > i { top: 48%; }
+.festival-petal {
+  border-radius: 85% 20% 75% 25%;
+  box-shadow: inset 1px 1px 0 #ffffffae, 0 1px 1px #29492b24;
+}
+.festival-sparkle {
+  clip-path: polygon(50% 0, 63% 36%, 100% 50%, 63% 64%, 50% 100%, 37% 64%, 0 50%, 37% 36%);
+}
+.festival-ring {
+  border: 2px solid #ffe581;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #fff9d942;
+}
+.festival-ring.festival-prism {
+  border: 0;
+  box-shadow: none;
+  background: conic-gradient(#ffe16c, #ff9acb, #a2eaff, #bd9fff, #baffaf, #ffe16c);
+  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(closest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+}
+.festival-seed {
+  width: 7px;
+  height: 10px;
+  border-radius: 75% 35% 65% 35%;
+  background: #d8a455;
+  box-shadow: inset 2px 1px 0 #ffe29c;
+}
+.plot.just-planted,
+.plot.just-evolved,
+.plot.festival-harvesting { overflow: visible; z-index: 3; }
+.plot.just-evolved { z-index: 4; }
+.plot.festival-harvesting :is(svg, img.plant-art) {
+  animation: none;
+  transform-origin: 50% 82%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .garden-festival { display: none; }
+  .plot.just-planted,
+  .plot.just-evolved,
+  .plot.festival-harvesting { z-index: auto; }
+}

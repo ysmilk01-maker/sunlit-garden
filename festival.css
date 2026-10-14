@@ -1,0 +1,177 @@
+/* v18 · A vivid magical garden. Load after seed-choice.css.
+ * Paint only: no sizing, grid, spacing, typography metrics, or animation changes.
+ * Species color is a category cue; checkmarks, text, and signed scores stay intact.
+ */
+:root{
+  --festival-page:#061f2a;
+  --festival-scene:#0a3540;
+  --festival-panel:#123f47;
+  --festival-panel-soft:#1a4b52;
+  --festival-text:#fff8e6;
+  --festival-text-muted:#bee4d6;
+  --festival-paper:#fff9ee;
+  --festival-ink:#183e46;
+  --festival-ink-muted:#4b6361;
+  --festival-primary:#ffd36a;
+  --festival-primary-shade:#ffb94f;
+  --festival-primary-ink:#3a2b16;
+  --festival-frame-light:#ffe69a;
+  --festival-frame:#efb84e;
+  --festival-frame-shade:#c6842f;
+  --festival-frame-ink:#573817;
+  --festival-soil:#775336;
+  --festival-soil-light:#a67b50;
+  --festival-board-gap:#65482e;
+  --festival-success:#98efbc;
+  --festival-success-ink:#185139;
+  --festival-evolution:#b58aff;
+  --festival-evolution-ink:#543487;
+  --festival-loss:#993e3b;
+  --festival-loss-light:#ffb9a6;
+  --festival-focus:#a7fbf0;
+  --festival-focus-ink:#155561;
+  --forest:var(--festival-scene);
+  --forest-deep:var(--festival-page);
+  --cream:var(--festival-text);
+  --sun:var(--festival-primary);
+  --ink:var(--festival-ink);
+  --paper:var(--festival-paper);
+}
+
+/* Dark breathing room makes the small garden and its plants the colorful focus. */
+body{background:radial-gradient(ellipse at 45% 8%,#19515e,var(--festival-page) 75%)}
+.app{background:radial-gradient(ellipse at 7% 26%,#17645a55,transparent 59%),radial-gradient(ellipse at 96% 78%,#57478238,transparent 49%),linear-gradient(155deg,#0e4249,var(--festival-scene) 55%,#102d3c)}
+.app:before{background:radial-gradient(ellipse at 28% 9%,#ffda791c,transparent 42%),radial-gradient(ellipse at 80% 48%,#93e3bf12,transparent 54%)}
+.atelier-arch{border-color:#90e1cc25;box-shadow:0 0 0 17px #082c3320,inset 0 0 0 11px #afeed009}
+.atelier-arch:before,.atelier-arch:after{background:linear-gradient(transparent,#8cd9ce24,transparent)}
+.topbar,.brand,.brand-title{color:var(--festival-text)}
+.brand-mark{background:var(--festival-primary);color:var(--festival-primary-ink);box-shadow:inset 0 1px #fff6cc,0 2px 7px #00151e55}
+.brand-sub,.app>footer{color:var(--festival-text-muted)}
+.topbar .icon-button{background:#a1e9de0e;color:#d0fff0}
+.topbar .icon-button:hover{background:#a1e9de24}
+.header-actions .mission-strip{background:#d9bcff19;box-shadow:inset 0 0 0 1px #ceb0ff40}
+.header-actions .mission-strip.done{background:#ffe39222;box-shadow:inset 0 0 0 1px var(--festival-primary)}
+.mission-strip.done:after{background:var(--festival-success);color:var(--festival-success-ink)}
+.journey,.journey h2>strong,.journey h2>span,.weather{color:var(--festival-text)}
+.journey h2 small,.weather small,.score-button small,.goal{color:var(--festival-text-muted)}
+.score-button,.score-button>span,.score-button strong{color:var(--festival-primary)}
+.goal-meter{background:#031f2b;box-shadow:inset 0 1px 2px #00151d66}
+.goal-meter>span{background:linear-gradient(90deg,#ffc159,#ffe49b);box-shadow:0 0 10px #ffd56a36}
+.goal-meter>i{color:#b2d0b8}
+.goal-meter.achieved>span{background:linear-gradient(90deg,#68dfb3,#cbffac)}
+.goal-meter.achieved>i,.goal.achieved{color:var(--festival-success);text-shadow:0 0 8px #96efbc35}
+.day-pip{background:#497177}.day-pip.done{background:var(--festival-success)}.day-pip.current{background:var(--festival-primary);box-shadow:0 0 6px #ffd36a35}
+
+/* The golden frame is a single warm focal object, rather than a saturated page. */
+.board-space:before{background:radial-gradient(ellipse,#ffd77728,transparent 68%)}
+.garden-frame{background:linear-gradient(145deg,var(--festival-frame-light),var(--festival-frame) 16%,var(--festival-frame-shade) 77%,#eeb44e);border-color:#ffe4a0;box-shadow:inset 0 2px 1px #fff6c9b0,inset 0 -3px #986124,0 6px 0 #744619,0 11px 22px #001a2566}
+.garden-frame:before{border-color:#fff3b950}.garden-frame:after{border-color:#fff0b673}
+.garden-edge{color:var(--festival-frame-ink)}.garden-floor{color:#573817}
+.board,.zoom-grid{background:var(--festival-board-gap);box-shadow:inset 0 2px 8px #30271b66}
+.plot,.seed-card{--species-paper:#e5f7d3;--species-shade:#b5d597;--species-accent:#427642}
+:is([data-type="sunflower"],[data-seed="sunflower"],[data-type="daisy"],[data-seed="daisy"]){--species-paper:#fff3b4;--species-shade:#f2cd6a;--species-accent:#715017}
+:is([data-type="clover"],[data-seed="clover"]){--species-paper:#d6ffe5;--species-shade:#90deb0;--species-accent:#1c5539}
+:is([data-type="mint"],[data-seed="mint"],[data-type="fern"],[data-seed="fern"]){--species-paper:#ddffe4;--species-shade:#9ed7a8;--species-accent:#245639}
+:is([data-type="berry"],[data-seed="berry"],[data-type="strawberry"],[data-seed="strawberry"]){--species-paper:#ffe0d6;--species-shade:#f5afa0;--species-accent:#763135}
+:is([data-type="lavender"],[data-seed="lavender"],[data-type="bluebell"],[data-seed="bluebell"]){--species-paper:#f0e3ff;--species-shade:#c9b0ec;--species-accent:#51326d}
+:is([data-type="mushroom"],[data-seed="mushroom"],[data-type="pumpkin"],[data-seed="pumpkin"]){--species-paper:#ffe9cb;--species-shade:#efbd8d;--species-accent:#683e1d}
+:is([data-type="hive"],[data-seed="hive"]){--species-paper:#fff0b4;--species-shade:#ecc46f;--species-accent:#65430c}
+:is([data-type="tulip"],[data-seed="tulip"],[data-type="rose"],[data-seed="rose"],[data-type="cherry"],[data-seed="cherry"]){--species-paper:#ffe4ef;--species-shade:#eeb2cc;--species-accent:#6b3152}
+:is([data-type="lotus"],[data-seed="lotus"],[data-type="well"]){--species-paper:#d9fff5;--species-shade:#8edbd0;--species-accent:#1e544c}
+:is([data-type="bamboo"],[data-seed="bamboo"],[data-type="cactus"],[data-seed="cactus"]){--species-paper:#eaf8c5;--species-shade:#b9d685;--species-accent:#40551d}
+:is([data-type="hydrangea"],[data-seed="hydrangea"],[data-type="orchid"],[data-seed="orchid"]){--species-paper:#e8e5ff;--species-shade:#b5b7e8;--species-accent:#414574}
+.plot[data-type],.plot[data-type].synergy,.plot[data-type].evolved{background:radial-gradient(ellipse at 40% 22%,var(--species-paper),var(--species-shade));box-shadow:inset 0 1px #fff9e899,inset 0 -2px #35544440}
+.plot.empty{background:radial-gradient(ellipse at 50% 20%,var(--festival-soil-light),var(--festival-soil));box-shadow:inset 0 2px 3px #35271750,inset 0 -1px #ffd89a35}
+.plot.empty:before{border-color:#ffe0a957}.plot.empty .empty-plus{color:#efd2a1}
+.plot.available{background:radial-gradient(ellipse at 45% 25%,#fff0c3,#dfb76b);outline-color:#ffe5a0;box-shadow:inset 0 1px #fff7d199,inset 0 -2px #7f612f50}
+.plot.available .empty-plus{color:var(--festival-frame-ink)}
+.plot.available.best{background:radial-gradient(ellipse,#fff7c6,#f4cd72);box-shadow:inset 0 0 0 2px #fffbd9,0 0 10px #ffe88b45}
+.plot.preview-anchor{box-shadow:inset 0 0 0 2px #fffbd9,0 0 0 2px var(--festival-primary-ink),0 0 10px #ffe88b55}
+.preview-score,.preview-label,.preview-anchor .preview-label{color:var(--festival-primary-ink)}
+.plot.preview-loss{background:radial-gradient(ellipse,#ffe1d5,#ecb8a7);outline-color:var(--festival-loss);box-shadow:inset 0 0 0 2px #b5614e}
+.plot.preview-loss .preview-score{color:var(--festival-loss)}
+.plot[data-type].evolved{box-shadow:inset 0 0 0 2px var(--festival-evolution),inset 0 -2px #67527b70,0 0 8px #b58aff24}
+.plot.evolution-ready{outline-color:var(--festival-evolution)}
+.evolution-badge{color:#fff4ba;text-shadow:0 1px 2px #543487,0 0 5px #7146aa}
+.column-badge{background:var(--festival-focus-ink);color:#f2fff4;box-shadow:none}
+.tile-score{background:#fff9ee;color:var(--festival-ink);box-shadow:0 1px 2px #263a322b}
+.tile-score.combo{background:var(--festival-primary);color:var(--festival-primary-ink)}
+.age-dots i{background:#3c66586b}.age-dots i.grown{background:#fff8d0;box-shadow:0 0 0 1px #30554450}
+.seedling-name{background:#173f43ee;color:#fff9e8}
+.zoom-zones button{border-color:#ffefa059}.zoom-zones span{background:#143e45f0;color:var(--festival-text)}
+.zoom-zones button:hover,.zoom-zones button:focus-visible{background:#fff6b622;border-color:#ffeb9e}
+
+/* Seed identity remains visible even when selected. No size or metric overrides. */
+.draft-heading h3{color:var(--festival-text)}.draft-heading>span,.draft-heading>.forecast{color:var(--festival-text-muted)}
+.draft-heading .forecast>strong{color:var(--festival-primary)}
+.seed-card,.seed-card[aria-pressed="true"]{background:linear-gradient(145deg,var(--species-paper),var(--species-shade));border-color:#fff4d86b;box-shadow:inset 0 1px #ffffffbf,0 3px 0 #001e2a80}
+.seed-card strong{color:var(--festival-ink)}.seed-base,.seed-condition{color:var(--species-accent)}
+.seed-potential{background:#fff9ee;color:var(--festival-ink)}
+.seed-potential.loss{color:var(--festival-loss)}
+.seed-card[aria-pressed="true"]{border-color:var(--festival-primary-ink);box-shadow:inset 0 0 0 1px #ffefac,0 0 0 2px var(--festival-primary),0 4px 9px #001f2e88}
+.seed-card[aria-pressed="true"]:after{background:var(--festival-ink);color:#fff9e8}
+.seed-strategy{background:var(--festival-panel);border-color:#6ea597;box-shadow:inset 0 1px #baf3d315}
+.seed-inline-head strong{color:var(--festival-primary)}.seed-inline-head span,.seed-inline-meta{color:var(--festival-text-muted)}
+.seed-inline-traits p{color:var(--festival-text)}.seed-inline-traits .seed-inline-warning{color:var(--festival-loss-light)}
+.zoom-seed-inline{background:#e4f8e9;border-color:#a4d1b5}
+.zoom-seed-inline .seed-inline-head strong,.zoom-seed-inline .seed-inline-traits p{color:var(--festival-ink)}
+.zoom-seed-inline .seed-inline-head span,.zoom-seed-inline .seed-inline-meta{color:var(--festival-ink-muted)}
+.zoom-seed-inline .seed-inline-warning{color:var(--festival-loss)}
+.tip{color:var(--festival-text-muted);border-color:#a1e0c649}
+.ready-card{background:linear-gradient(125deg,#164e4b,#22465b);border-color:#87d0b87d;box-shadow:inset 0 1px #baf7d922}
+.ready-card>span,.ready-card strong{color:var(--festival-primary)}.ready-card p{color:var(--festival-text-muted)}
+.primary,.actions>.primary,.home-play,dialog .primary{background:linear-gradient(130deg,var(--festival-primary),var(--festival-primary-shade));color:var(--festival-primary-ink);border-color:#ffe69c;box-shadow:inset 0 1px #fff2bf,0 3px 0 #a86b26}
+.actions>.primary:disabled{background:var(--festival-panel-soft);color:#b1d2c9;box-shadow:inset 0 0 0 1px #729b8e4d}
+.actions>.secondary{background:#174750;border-color:#83bfaa45;color:var(--festival-text-muted)}
+dialog .primary:disabled{background:#e5e7dc;color:#63716a;box-shadow:inset 0 0 0 1px #c7d1c5}
+
+/* Cream sheets retain readable explanations; hue marks an ability, not its strength. */
+dialog{background:var(--festival-paper);color:var(--festival-ink);border-color:#ffe3a5;box-shadow:0 25px 90px #001726b0}
+dialog::backdrop{background:#031c28b8}
+.sheet-heading h2{color:var(--festival-ink)}.eyebrow{color:#78561e}.sheet-heading .icon-button{background:#e1eee6;color:#285650}
+dialog .secondary{background:#e2f2e6;border-color:#aed0bb;color:#28564d}
+.strategy-upgrade{--ability-paper:#e8f6ef;--ability-border:#aad3c1;--ability-ink:#315f51;background:var(--ability-paper);border-color:var(--ability-border);color:var(--festival-ink)}
+.strategy-upgrade[data-upgrade="spring"],.strategy-upgrade[data-upgrade="shade"]{--ability-paper:#e0f7f1;--ability-border:#9ccfc7;--ability-ink:#286259}
+.strategy-upgrade[data-upgrade="colony"],.strategy-upgrade[data-upgrade="companions"],.strategy-upgrade[data-upgrade="edge_bloom"]{--ability-paper:#e6f6d5;--ability-border:#b6d590;--ability-ink:#46632b}
+.strategy-upgrade[data-upgrade="diversity"],.strategy-upgrade[data-upgrade="mixed_beds"],.strategy-upgrade[data-upgrade="wild"]{--ability-paper:#efe6fd;--ability-border:#c8b2e5;--ability-ink:#614583}
+.strategy-upgrade[data-upgrade="sun_pact"],.strategy-upgrade[data-upgrade="bees"],.strategy-upgrade[data-upgrade="patience"]{--ability-paper:#fff0c5;--ability-border:#dfc17e;--ability-ink:#755a21}
+.strategy-upgrade[data-upgrade="jam"]{--ability-paper:#ffe6df;--ability-border:#e1b5a8;--ability-ink:#824b40}
+.strategy-upgrade strong,.strategy-upgrade>b{color:var(--ability-ink)}
+dialog[data-mode="upgrade"] .strategy-upgrade .upgrade-effect,.strategy-upgrade small{color:var(--festival-ink-muted)}
+.strategy-upgrade[aria-pressed="true"]{background:var(--ability-paper);border-color:#7c5c1c;box-shadow:inset 0 0 0 1px var(--festival-primary),0 0 0 1px #7c5c1c}
+.strategy-evolution{background:radial-gradient(ellipse at 50% 20%,#fbf5ff,#e5d7ff);border-color:#c9abe9;box-shadow:0 3px 0 #c1a3dd88;color:var(--festival-evolution-ink)}
+.strategy-evolution small{color:#665180}
+.strategy-evolution[aria-pressed="true"]{background:radial-gradient(ellipse at 50% 20%,#fff1d8,#e8d4ff);border-color:#8053a5;box-shadow:inset 0 0 0 1px #9d75c7,0 3px 0 #986ebc70}
+.evolution-picker{background:#eae0f8}.evolution-example>div{background:linear-gradient(145deg,#fff6e3,#e9ddf8);border-color:#c9b9dd}
+.choice-explanation{background:#fffdf5;border-color:#d9d0b5;box-shadow:inset 0 2px #ffe7ae66}
+.upgrade-preview-numbers,.upgrade-preview-reason,.choice-prompt{color:var(--festival-ink)}.upgrade-preview-numbers b{color:var(--festival-ink-muted)}
+.strategy-role{color:var(--festival-evolution-ink)}.advice-numbers{background:#e8f4ec}.advice-numbers strong{color:#285d49}
+.advice-numbers .loss,.seed-equation .loss{color:var(--festival-loss)}
+.reward-line{background:#dcf7df;color:#28583d}.reward-line.pending{background:#eeeee2;color:#646956}
+.result-postcard{background:linear-gradient(150deg,#155752,#143d53);border-color:#e6c06c;color:var(--festival-text)}
+.result-postcard-copy>small,.result-postcard-copy>span{color:var(--festival-text-muted)}.result-postcard-copy>strong{color:var(--festival-primary)}
+.result-heading .star.won{color:#d48b16;text-shadow:0 1px #fff0bd;filter:drop-shadow(0 2px 0 #ab6c2033)}
+.result-rewards>span{background:#ffe8b4;color:#73501e}.result-next{background:#e3f4df;color:#365c3d}
+.mission-bubble{background:#f0e7fb;color:#514269}.mission-task{background:#e2f6df;color:#345b3c}.mission-task span{background:#ffe9b6;color:#755521}
+.decor-card{background:#e6f3e7;border-color:#b8d4bb}.decor-card:nth-child(even){background:#efe5f9;border-color:#d1bce5}.decor-card[aria-pressed="true"]{border-color:#376850;box-shadow:inset 0 0 0 1px #659c6c}
+.toggle[aria-checked="true"]{background:#31826a}.stage-card.current{border-color:#5e8860;background:#e7f5d5}.stage-card.cleared{background:#e3f4e8}
+.harvest-banner,.reward-toast{background:var(--festival-panel);color:var(--festival-primary);border-color:#ffd879;box-shadow:0 10px 25px #001d2b80}
+.garden-frame.harvest-celebration{box-shadow:inset 0 1px #fff0b4,0 6px 0 #925c26,0 0 28px #ffdf8766}
+
+/* Home art stays unfiltered; only its framing and controls receive the palette. */
+.home-screen:before{background:linear-gradient(#072c3550,transparent 35%,transparent 49%,#092f3766 65%,#082f3aec 88%)}
+.home-panel,.home-panel:has(.new-rules-link:not([hidden])){background:linear-gradient(transparent,#0b3540b3 28%,#0b3540ef)}
+.home-sky h1{color:#fff4d7;text-shadow:0 3px 0 #5b482535,0 7px 22px #07273588}
+.home-sky h1>span,.home-sky h1 i{color:var(--festival-primary)}
+.home-kicker,.home-sky p{color:#e1f3dc}.home-stats,.home-note{color:var(--festival-text-muted)}.home-stats strong{color:var(--festival-primary)}
+.home-play small,.home-play>span:last-child{color:var(--festival-primary-ink)}
+.home-links button{background:#1b4852cc;border-color:#a5e1cf33;color:#e7ffec}.home-links button>span{color:#a3f0d0}
+.home-visitor{background:#143e49d9;border-color:#ffd77b59;color:#ffeab9}.home-visitor span{color:var(--festival-primary)}
+.home-sound{background:#123c48cc;border-color:#b0e9d85e;color:var(--festival-text)}
+.home-sound[aria-pressed="false"]{background:#123c48cc;color:#b8dacf}.home-sound[aria-pressed="false"]:after{background:#c5e4d5}
+.new-rules-link{background:#204e53;border-color:#9ed5bc50;color:#ddf4cf}
+
+/* Keyboard focus remains independent of category, selection, and score status. */
+:is(.seed-card,.strategy-upgrade,.strategy-evolution):focus-visible{outline:2px solid var(--festival-focus-ink);outline-offset:2px}
+:is(.board,.zoom-grid) .plot:focus-visible{outline:2px solid var(--festival-focus-ink);outline-offset:-2px}
+.topbar button:focus-visible,.home-screen button:focus-visible,.actions button:focus-visible{outline:2px solid var(--festival-focus);outline-offset:-2px}
