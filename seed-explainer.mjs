@@ -1,8 +1,8 @@
-import * as core from './evolution-core.mjs';
+import * as core from './evolution-core.mjs?v=20261015-20';
 
 // Text describes the rules; all placement scores come from the selected engine.
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
-const versions = new Set([2, 3, 4, 5]);
+const versions = new Set([2, 3, 4, 5, 6]);
 const entriesFor = state => state?.version === 2 ? core.LEGACY_SEEDS
   : state?.version === 3 ? core.V8_SEEDS : core.SEEDS;
 const baseValues = Object.freeze({
@@ -34,7 +34,7 @@ function sharedRules(state, type) {
     if (has(state, 'edge_bloom')) shared.push(rule('edge_bloom', '테두리 화단', '가장자리에서 다른 종류 식물과 상하좌우로 붙으면 +3. 우물·벌집 제외.'));
     if (has(state, 'mixed_beds') && allFlowers.includes(type)) shared.push(rule('mixed_beds', '꽃과 잎 사이', '꽃 아닌 식물과 상하좌우로 붙으면 이 꽃 +2. 우물·벌집 제외.'));
   }
-  if (state.version === 5 && type !== 'hive') shared.push(rule('evolution', '진화한 이웃', '주변 진화 식물이 추가 점수를 주거나, 새 이웃 때문에 기존 보너스를 잃을 수 있어요. 실제 변화는 자리별 예고로 확인해요.'));
+  if (state.version >= 5 && type !== 'hive') shared.push(rule('evolution', '진화한 이웃', '주변 진화 식물이 추가 점수를 주거나, 새 이웃 때문에 기존 보너스를 잃을 수 있어요. 실제 변화는 자리별 예고로 확인해요.'));
   return shared;
 }
 

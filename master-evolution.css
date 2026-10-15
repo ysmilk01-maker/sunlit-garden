@@ -1,0 +1,21 @@
+/* A third stage keeps the family silhouette and gains its own floral crown. */
+.master-art{position:relative;display:inline-block;flex:none;width:100px;height:100px;overflow:visible;vertical-align:middle}
+.master-art .master-plant{position:absolute;inset:9%;display:block}
+.master-art .master-plant>.plant-art{display:block!important;position:static!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;transform:none!important;object-fit:contain}
+.master-art>svg.master-aura,.master-art>svg.master-crown{position:absolute!important;inset:0;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;pointer-events:none}
+.master-aura{z-index:0}.master-plant{z-index:1}.master-crown{z-index:2}
+.plot.evolution-master{box-shadow:inset 0 0 0 2px #ffdb72,inset 0 -3px #83634870,0 0 12px #ffd56a42}
+.plot.evolution-master .evolution-badge{padding:2px 3px;border-radius:5px;background:#654522;color:#fff2b6;font-size:9px;text-shadow:none}
+.plot>.master-art{width:90%;height:90%;max-width:90%;max-height:90%}
+.evolution-picker .master-art{width:50px;height:50px}
+.strategy-evolution>.master-art{width:90px;height:90px}
+.tile-detail-art>.master-art{width:132px;height:132px}
+.evolution-example .master-art{width:102px;height:102px}
+.evolution-tier{font-size:9px!important;line-height:1.4;padding:2px 7px;border-radius:20px;color:#744b21;background:#ffecad;letter-spacing:.2px}
+.strategy-evolution.master-choice{background:radial-gradient(ellipse at 50% 20%,#fff9d4,#f7dc9e);border-color:#d3a853;color:#60401e}
+.strategy-evolution.master-choice[aria-pressed="true"]{border-color:#967028;box-shadow:inset 0 0 0 1px #bd923e,0 3px 0 #ab853d44}
+.strategy-evolution.switch-candidate{background:#edf4ef;border:1px dashed #8caf9b;color:#315c4a}
+.evolution-route{margin:6px 0;text-align:center;font-size:10px;line-height:1.45;color:#657657;word-break:keep-all}
+.evolution-picker strong{overflow-wrap:anywhere}
+@media(max-height:750px){.strategy-evolution>.master-art{width:61px;height:61px}.evolution-example .master-art{width:88px;height:88px}}
+@media(max-height:650px){.strategy-evolution>.master-art{width:49px;height:49px}.evolution-picker .master-art{width:32px;height:32px}.evolution-example .master-art{width:64px;height:64px}.evolution-route{font-size:9px;margin:4px 0}.evolution-tier{font-size:8px!important}}

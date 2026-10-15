@@ -7,10 +7,12 @@
 <link rel="stylesheet" href="./styles.css?v=20261013-13">
 <link rel="stylesheet" href="./experience.css?v=20261013-13">
 <link rel="stylesheet" href="./atelier.css?v=20261013-14.4">
-<link rel="stylesheet" href="./seed-choice.css?v=20261014-17.1">
+<link rel="stylesheet" href="./seed-choice.css?v=20261015-20">
 <link rel="stylesheet" href="./festival.css?v=20261014-18">
 <link rel="stylesheet" href="./festival-effects.css?v=20261014-18">
 <link rel="stylesheet" href="./seed-discovery.css?v=20261014-19">
+<link rel="stylesheet" href="./master-evolution.css?v=20261015-20">
+<link rel="stylesheet" href="./weather-scene.css?v=20261015-20">
 <link rel="preload" as="image" href="./assets/atelier-v14/greenhouse-home-v14.webp">
 </head>
 <body>
@@ -18,7 +20,7 @@
   <div class="atelier-arch" aria-hidden="true"></div>
   <section id="home-screen" class="home-screen" aria-label="햇빛정원 시작 화면">
     <div class="home-sky"><span class="home-kicker">SUNLIT GARDEN</span><h1>햇빛<span>정원</span><i aria-hidden="true">✧</i></h1><p>작은 선택이 피어나는 곳.<br>일곱 날, 나만의 정원을 키워요.</p></div>
-    <button class="home-visitor" id="home-preview"><span aria-hidden="true">✦</span> 같은 씨앗, 두 가지 진화 ↗</button>
+    <button class="home-visitor" id="home-preview"><span aria-hidden="true">✦</span> 같은 씨앗, 3단계까지 진화 ↗</button>
     <div class="home-panel"><div class="home-stats" id="home-stats"></div><button id="home-play" class="primary home-play">정원 열기 <span aria-hidden="true">↗</span></button><div class="home-links"><button id="home-stages"><span aria-hidden="true">⌘</span>정원의 길</button><button id="home-collection"><span aria-hidden="true">✿</span>꾸미기 수첩</button><button id="home-settings"><span aria-hidden="true">☷</span>음악·설정</button></div><button id="home-new-rules" class="new-rules-link" hidden>새 규칙으로 시작 · 세로열 보너스와 높은 목표 ↗</button><button id="home-sound" class="home-sound" aria-pressed="false">♫ 효과음 켜기</button><p class="home-note">서두르지 않아도 괜찮아요. 당신의 속도로.</p></div>
   </section>
   <header class="topbar"><button id="home-button" class="brand stage-button" aria-label="시작 화면" aria-haspopup="dialog"><span class="brand-mark" aria-hidden="true">✿</span><span><span class="brand-title">햇빛정원</span><span id="stage-label" class="brand-sub">1단계 · ∞</span></span></button><div class="header-actions"><button id="mission-button" class="mission-strip" aria-haspopup="dialog"><img src="./assets/bunny-guide-v6.webp" alt="" width="48" height="48"><span id="mission-copy"></span><span id="mission-progress"></span></button><button id="stage-button" class="icon-button" aria-label="단계 선택" aria-haspopup="dialog">⌘</button><button id="help" class="icon-button" aria-label="놀이 방법과 식물 도감" aria-haspopup="dialog">?</button><button id="settings" class="icon-button" aria-label="배경음악과 소리 설정" aria-haspopup="dialog">☷</button></div></header>
@@ -35,5 +37,5 @@
 <dialog id="sheet" aria-labelledby="sheet-title"><div class="sheet-heading"><div><p id="sheet-eyebrow" class="eyebrow"></p><h2 id="sheet-title"></h2></div><button id="close-sheet" class="icon-button" aria-label="닫기">×</button></div><div id="sheet-content"></div></dialog>
 <div class="orientation-notice" role="status"><div><span class="phone" aria-hidden="true">✿</span><p class="eyebrow">햇빛정원</p><h2>화면을 세워 주세요</h2><p>세로 화면에서 정원을 이어서 키울 수 있어요.</p></div></div>
 <audio id="garden-bgm" src="./assets/audio/beatwave-bgm.mp3" preload="none" loop playsinline hidden></audio>
-<script type="module" src="./experience-app.mjs?v=20261014-19"></script>
+<script type="module" src="./experience-app.mjs?v=20261015-20"></script>
 </body></html>

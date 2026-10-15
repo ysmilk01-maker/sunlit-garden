@@ -1,4 +1,4 @@
-import * as core from './evolution-core.mjs';
+import * as core from './evolution-core.mjs?v=20261015-20';
 import * as classic from './campaign-core.mjs';
 
 // Advice is a projection of the selected save's rules, never a second score engine.
@@ -13,7 +13,7 @@ const entriesFor = state => state.version === 2 ? { seeds: core.LEGACY_SEEDS, up
 const isPlant = (state, tile) => !!tile && own(entriesFor(state).seeds, tile.type) && tile.type !== 'hive';
 const isResting = (state, tile) => tile?.evolution?.id === 'solar' && state.day > tile.evolution.day
   && (state.day - tile.evolution.day) % 2 === 1;
-const validState = state => !!state && [2, 3, 4, 5].includes(state.version) && Array.isArray(state.board)
+const validState = state => !!state && [2, 3, 4, 5, 6].includes(state.version) && Array.isArray(state.board)
   && state.board.length === state.cols * state.rows && Number.isInteger(state.day) && state.day >= 1 && state.day <= core.RUN_DAYS;
 const dayLabel = day => `${day}일차 수확`;
 
@@ -295,22 +295,25 @@ function evolutionReason(state, index, id, preview) {
 
 export function evolutionAdvice(state, index, id) {
   try {
-    if (!validState(state) || state.version !== 5 || !own(EVOLUTION_HINTS, id)) return null;
+    if (!validState(state) || state.version < 5 || !own(EVOLUTION_HINTS, id)) return null;
     const preview = core.previewEvolution(state, index, id);
     if (!preview) return null;
     const chosen = core.evolve(state, index, id);
     const board = chosen.board.map((tile, position) => {
       if (position !== index || !tile) return tile;
+      // Keep the selected plant's existing tier when comparing tier 2 -> 3.
       const { evolution, ...plain } = tile;
-      return plain;
+      return state.board[index].evolution ? { ...plain, evolution: { ...state.board[index].evolution } } : plain;
     });
     const unchanged = { ...chosen, board };
     const now = compare(unchanged, chosen), hint = EVOLUTION_HINTS[id];
+    const detail = core.evolutionDetails(chosen.board[index]);
+    const master = core.evolutionTier(chosen.board[index]) === 3;
     return {
-      role: hint.role, reason: evolutionReason(state, index, id, preview), watch: hint.watch, plan: hint.plan,
+      role: master ? '3단계 · 한 송이에 집중' : hint.role, reason: master ? detail.description : evolutionReason(state, index, id, preview), watch: master ? '이번 진화 기회 한 번을 써요. 다른 식물의 첫 진화와 수확 증가량을 비교하세요.' : hint.watch, plan: hint.plan,
       nowLabel: dayLabel(preview.nextDay), nowDelta: preview.nextDelta,
       laterLabel: dayLabel(preview.followingDay), laterDelta: preview.followingDelta,
-      affected: now.affected, description: core.EVOLUTIONS[id].description,
+      affected: now.affected, description: detail.description,
     };
   } catch { return null; }
 }

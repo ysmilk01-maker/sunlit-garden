@@ -1,8 +1,8 @@
-import { seedFacts } from './seed-explainer.mjs';
-import { UPGRADES, LEGACY_UPGRADES, V8_UPGRADES, RUN_DAYS } from './evolution-core.mjs';
+import { seedFacts } from './seed-explainer.mjs?v=20261015-20';
+import { UPGRADES, LEGACY_UPGRADES, V8_UPGRADES, RUN_DAYS } from './evolution-core.mjs?v=20261015-20';
 
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
-const valid = state => !!state && [2, 3, 4, 5].includes(state.version);
+const valid = state => !!state && [2, 3, 4, 5, 6].includes(state.version);
 const has = (state, id) => Array.isArray(state.upgrades) && state.upgrades.includes(id);
 const upgradesFor = state => state.version === 2 ? LEGACY_UPGRADES
   : state.version === 3 ? V8_UPGRADES : UPGRADES;

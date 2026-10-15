@@ -1,3 +1,4 @@
+import { masterArt } from './master-art.mjs?v=20261015-20';
 import { plantArt as svgPlantArt } from './garden-art.mjs?v=20261013-8';
 import { evolutionArt as svgEvolutionArt } from './evolution-art.mjs?v=20261013-11';
 
@@ -68,8 +69,9 @@ export function evolutionArt(type, evolutionId, age = 2, options = {}) {
   if (evolutionId == null || evolutionId === '') return plantArt(safeType, stage, { small });
   const safeId = typeof evolutionId === 'string' ? evolutionId : null;
   const key = `evo-${safeId}`, record = own(SPRITES, key) ? SPRITES[key] : null;
-  return record?.type === safeType && eligible(record, stage)
+  const markup = record?.type === safeType && eligible(record, stage)
     ? image(key, stage, small) : svgEvolutionArt(safeType, safeId, stage, { small });
+  return options?.tier === 3 && record?.type === safeType ? masterArt(markup, safeType, safeId) : markup;
 }
 
 function restoreSvg(target) {

@@ -1,0 +1,173 @@
+/* v20 · The weather lives behind every interactive surface. Animated properties
+   are only transform/opacity; no timers, canvas, filters or new image requests. */
+.weather-scene {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  contain: layout paint;
+}
+.weather-scene *, .weather-scene *::before, .weather-scene *::after {
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.weather-scene__layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 220ms var(--ease);
+}
+.weather-scene[data-weather="sun"] .weather-scene__sun,
+.weather-scene[data-weather="rain"] .weather-scene__rain,
+.weather-scene[data-weather="cloud"] .weather-scene__cloud { opacity: 1; }
+/* Central scrims retain the contrast of the day/forecast text and seed advice. */
+.weather-scene__sun {
+  background: radial-gradient(ellipse at 4% 6%, #c0a44e99, transparent 45%),
+    radial-gradient(ellipse at 100% 38%, #44886c65, transparent 50%),
+    linear-gradient(165deg, #28534c, #123f42 36%, #173d3c 68%, #102e3b);
+}
+.weather-scene__rain {
+  background: radial-gradient(ellipse at 90% 0%, #7285bf70, transparent 46%),
+    radial-gradient(ellipse at 5% 48%, #377cad55, transparent 52%),
+    linear-gradient(165deg, #203e61, #14354e 40%, #133849 72%, #122e46);
+}
+.weather-scene__layer.weather-scene__cloud {
+  background: radial-gradient(ellipse at 8% 16%, #a99bce55, transparent 43%),
+    radial-gradient(ellipse at 95% 52%, #7762ab4a, transparent 52%),
+    linear-gradient(165deg, #4c4b70, #303d57 37%, #273b4d 72%, #283349);
+}
+.weather-scene__layer > i { position: absolute; display: block; }
+.weather-scene__sun-disc {
+  top: -62px;
+  left: -62px;
+  width: 175px;
+  height: 175px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff2a8 3%, #ffe69c96 22%, #fbd7792b 51%, transparent 70%);
+  opacity: .8;
+}
+.weather-scene__ray {
+  top: -100px;
+  left: -65px;
+  width: 105px;
+  height: 72%;
+  transform-origin: 50% 0;
+  transform: rotate(-31deg);
+  background: linear-gradient(180deg, #fff1b22b, #ffde8412 52%, transparent);
+  border-radius: 0 0 50% 50%;
+  animation: scene-rays 12s var(--ease) infinite alternate;
+}
+.weather-scene__ray:nth-of-type(3) { left: -15px; width: 65px; transform: rotate(-12deg); animation-delay: -4s; }
+.weather-scene__ray:nth-of-type(4) { left: 46px; width: 24px; transform: rotate(-24deg); animation-delay: -8s; }
+.weather-scene__mote {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffe9a1;
+  box-shadow: 0 0 7px #ffe9a170;
+  opacity: .55;
+  animation: scene-mote 9s linear infinite;
+}
+.weather-scene__mote:nth-of-type(5) { left: 6%; top: 26%; }
+.weather-scene__mote:nth-of-type(6) { left: 91%; top: 22%; animation-delay: -2s; }
+.weather-scene__mote:nth-of-type(7) { left: 3%; top: 54%; animation-delay: -7s; }
+.weather-scene__mote:nth-of-type(8) { left: 96%; top: 60%; animation-delay: -4s; }
+.weather-scene__mote:nth-of-type(9) { left: 17%; top: 13%; animation-delay: -3s; }
+.weather-scene__mote:nth-of-type(10) { left: 87%; top: 42%; animation-delay: -5s; }
+.weather-scene__mote:nth-of-type(11) { left: 12%; top: 89%; animation-delay: -1s; }
+.weather-scene__mote:nth-of-type(12) { left: 93%; top: 93%; animation-delay: -6s; }
+.weather-scene__layer > .weather-scene__cloud-puff {
+  width: 78%;
+  height: 19%;
+  min-height: 90px;
+  top: -6%;
+  left: -22%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 55% 65%, #d5dcf140, transparent 68%);
+  animation: scene-cloud 18s var(--ease) infinite alternate;
+}
+.weather-scene__layer > .weather-scene__cloud-puff:nth-of-type(2) {
+  top: 4%; left: 57%; width: 85%; opacity: .8; animation-delay: -8s;
+}
+.weather-scene__layer > .weather-scene__cloud-puff:nth-of-type(3) {
+  top: 38%; left: -62%; width: 97%; opacity: .4; animation-delay: -13s;
+}
+.weather-scene__layer > .weather-scene__cloud-puff:nth-of-type(4) {
+  top: 64%; left: 66%; width: 85%; opacity: .5; animation-delay: -5s;
+}
+.weather-scene__rain > .weather-scene__cloud-puff { background: radial-gradient(ellipse at 55% 65%, #0b213d82, transparent 68%); }
+.weather-scene__drop {
+  width: 1px;
+  height: 36px;
+  top: -40px;
+  left: 5%;
+  opacity: .4;
+  background: linear-gradient(transparent, #a1ddf1b5);
+  transform: rotate(11deg);
+  animation: scene-rain 2400ms linear infinite;
+}
+/* Side lanes stay visible around 4×4 and 7×7 boards. The board is opaque. */
+.weather-scene__drop:nth-of-type(4) { left: 5%; animation-delay: -700ms; }
+.weather-scene__drop:nth-of-type(5) { left: 19%; animation-delay: -1800ms; }
+.weather-scene__drop:nth-of-type(6) { left: 36%; animation-delay: -300ms; }
+.weather-scene__drop:nth-of-type(7) { left: 53%; animation-delay: -1400ms; }
+.weather-scene__drop:nth-of-type(8) { left: 72%; animation-delay: -2100ms; }
+.weather-scene__drop:nth-of-type(9) { left: 91%; animation-delay: -1000ms; }
+.weather-scene__drop:nth-of-type(10) { left: 99%; animation-delay: -400ms; }
+.weather-scene__drop:nth-of-type(11) { left: 8%; animation-delay: -2200ms; }
+.weather-scene__drop:nth-of-type(12) { left: 26%; animation-delay: -1100ms; }
+.weather-scene__drop:nth-of-type(13) { left: 45%; animation-delay: -1900ms; }
+.weather-scene__drop:nth-of-type(14) { left: 64%; animation-delay: -100ms; }
+.weather-scene__drop:nth-of-type(15) { left: 83%; animation-delay: -1600ms; }
+.weather-scene__drop:nth-of-type(16) { left: 96%; animation-delay: -2000ms; }
+.weather-scene__drop:nth-of-type(17) { left: 4%; animation-delay: -1200ms; }
+.weather-scene__drop:nth-of-type(18) { left: 61%; animation-delay: -600ms; }
+.weather-scene__drop:nth-of-type(19) { left: 88%; animation-delay: -2300ms; }
+.weather-scene__ripple {
+  left: 5%; top: 62%; width: 42px; height: 12px;
+  border: 1px solid #9edeee80;
+  border-radius: 50%; opacity: .3;
+  animation: scene-ripple 3s var(--ease) infinite;
+}
+.weather-scene__ripple:nth-of-type(21) { left: 84%; top: 53%; width: 34px; animation-delay: -1s; }
+.weather-scene__ripple:nth-of-type(22) { left: 88%; top: 89%; width: 24px; animation-delay: -2s; }
+.weather-scene__haze {
+  inset: 0;
+  background: radial-gradient(ellipse at 0 52%, #b3a6d621, transparent 44%), radial-gradient(ellipse at 100% 74%, #b3a6d626, transparent 41%);
+}
+/* Frame reflections are static, so weather reads without adding moving UI. */
+.app[data-scene-weather="sun"] .atelier-arch { border-color: #ffe7a541; }
+.app[data-scene-weather="rain"] .atelier-arch { border-color: #99d9fa40; }
+.app[data-scene-weather="cloud"] .atelier-arch { border-color: #d2c1ed3b; }
+.app[data-scene-weather="rain"] .garden-frame::before { border-color: #b7e4ff80; }
+.app[data-scene-weather="cloud"] .garden-frame::before { border-color: #dcc5ff70; }
+.weather-scene .weather-scene__layer > i { animation-play-state: paused; }
+.weather-scene[data-weather="sun"] .weather-scene__sun > i,
+.weather-scene[data-weather="rain"] .weather-scene__rain > i,
+.weather-scene[data-weather="cloud"] .weather-scene__cloud > i { animation-play-state: running; }
+.weather-scene[data-paused="true"] .weather-scene__layer > i,
+.app.home-mode .weather-scene__layer > i { animation-play-state: paused; }
+@keyframes scene-rays { from { opacity: .6; } to { opacity: 1; } }
+@keyframes scene-mote {
+  0% { transform: translate(0, 20px); opacity: 0; }
+  20%, 75% { opacity: .55; }
+  100% { transform: translate(12px, -35px); opacity: 0; }
+}
+@keyframes scene-cloud { from { transform: translateX(-8%); } to { transform: translateX(8%); } }
+@keyframes scene-rain { from { transform: translate(20px, -40px) rotate(11deg); } to { transform: translate(-90px, 1040px) rotate(11deg); } }
+@keyframes scene-ripple { from { transform: scale(.65); opacity: .45; } to { transform: scale(1.25); opacity: 0; } }
+@media (max-width: 350px) {
+  .weather-scene__drop:nth-of-type(even) { display: none; }
+  .weather-scene__mote:nth-of-type(even) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .weather-scene__layer { transition-duration: 150ms; }
+  .weather-scene .weather-scene__layer > i { animation: none; }
+  .weather-scene__drop { top: 19%; height: 22px; opacity: .22; }
+  .weather-scene__drop:nth-of-type(3n) { top: 43%; }
+  .weather-scene__drop:nth-of-type(3n + 1) { top: 72%; }
+  .weather-scene__ripple { opacity: .25; }
+}
