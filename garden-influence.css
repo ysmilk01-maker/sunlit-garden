@@ -1,0 +1,38 @@
+/* v21: one origin, actual recipient deltas, no new space taken from the board. */
+.board,.zoom-grid{position:relative}
+.influence-layer{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:6}
+.influence-line{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke;opacity:.95}
+.influence-line--positive{stroke:#2df4bd}.influence-line--negative{stroke:#ff6299}.influence-line--mixed{stroke:#ffe58d}
+.influence-line--distant{stroke-dasharray:4 4;stroke-width:1.7;opacity:.8}
+.plot.influence-source{outline:3px solid #fff3ae;outline-offset:-2px;z-index:2;box-shadow:inset 0 0 0 4px #ad7c3280,0 0 16px #ffd76755}
+.plot.influence-positive{outline:2px solid #2df4bd;outline-offset:-2px}
+.plot.influence-negative{outline:2px solid #ff6299;outline-offset:-2px}
+.plot.influence-mixed{outline:2px solid #ffe58d;outline-offset:-2px}
+.influence-marker{position:absolute;bottom:2px;left:2px;z-index:8;min-width:22px;padding:1px 4px;border-radius:5px;font-size:11px;font-weight:900;line-height:1.25;box-shadow:0 1px 4px #062c2790;pointer-events:none;animation:influence-arrive 380ms var(--ease) both}
+.influence-marker--positive{color:#06392d;background:#62ffcf;border:1px solid #c8ffe9}
+.influence-marker--negative{color:#600b2a;background:#ff99bd;border:1px solid #ffdae7}
+.influence-marker--mixed{color:#5c4614;background:#ffe58d;border:1px solid #fff3c4}
+.influence-origin-label{position:absolute;left:50%;top:2px;transform:translateX(-50%);z-index:8;max-width:100%;padding:1px 3px;background:#fff3b5;color:#63471b;border-radius:4px;font-size:8px;line-height:1.2;white-space:nowrap;font-weight:800;pointer-events:none}
+.plot.influence-source .preview-label{top:32%;font-size:7px}
+.plot.influence-source .preview-score{bottom:8%;font-size:15px}
+.influence-summary,.seed-strategy>.influence-summary{height:100%;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 113px;grid-template-rows:auto minmax(0,1fr);align-items:stretch;gap:3px 6px}
+.influence-summary-head{display:flex;justify-content:space-between;gap:4px;align-items:center;min-width:0;font-size:10px;color:#c5e9d6}
+.influence-summary-head strong{font-size:12px;color:#fff0aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.influence-summary p,.seed-strategy .influence-summary p{grid-column:1;margin:0;font-size:11px;line-height:1.35;color:#ddf7e9;word-break:keep-all}
+.influence-summary .influence-gain{color:#72ffce}.influence-summary .influence-loss{color:#ffaccc}
+.influence-assumption{display:block;margin-top:3px;font-size:8px;line-height:1.25;color:#b2d3c5}
+.influence-summary-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;grid-column:2;grid-row:1/3;align-self:center;height:44px}
+.influence-summary-actions button{min-height:44px;min-width:44px;border:1px solid #a3dbc95c;border-radius:9px;background:#123d42;color:#e9fff4;font-size:11px;padding:0 4px}
+.draft:has(.influence-summary) .ready-card{display:none}
+.draft-heading h3{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.draft.influence-ready .seed-strategy{grid-row:2/4}
+.influence-preview-note{color:#77f5d4!important}
+.garden-floor{left:6%;right:6%;justify-content:center}
+.garden-floor #board-hint{font-size:7px;letter-spacing:0;text-align:center;white-space:nowrap;color:#fff1bc}
+.overview .influence-marker{font-size:8px;padding:0 2px;min-width:16px}
+.overview .influence-origin-label{font-size:6px;padding:0 1px}
+.zoom-grid .influence-origin-label{font-size:8px}
+.zoom-seed-inline.influence-inspection{height:100px;padding:5px 8px;background:#164b4a;border-color:#7fbaa5}
+@keyframes influence-arrive{from{opacity:0;transform:translateY(5px) scale(.75)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-height:590px){.influence-summary,.seed-strategy>.influence-summary{gap:2px 6px}.influence-summary-head strong{font-size:11px}.influence-summary p,.seed-strategy .influence-summary p{font-size:10px;line-height:1.25}.influence-summary-head{font-size:9px}.influence-summary-actions button{font-size:10px}.influence-marker{font-size:9px;min-width:18px;padding:1px 3px}.influence-origin-label{font-size:7px}.zoom-seed-inline.influence-inspection{height:91px;padding:4px 7px}}
+@media(prefers-reduced-motion:reduce){.influence-marker{animation:none}}
