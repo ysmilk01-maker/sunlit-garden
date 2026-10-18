@@ -13,8 +13,6 @@ import {createGardenMusic} from './garden-music.mjs?v=20261013-7';
 import * as LEGACY from './campaign-legacy-v7.mjs';
 import * as LEGACY8 from './campaign-legacy-v8.mjs';
 import {createWeatherScene} from './weather-scene.mjs?v=20261015-20';
-import {placementInfluence,plantInfluence} from './garden-influence.mjs?v=20261015-21';
-import {drawInfluence} from './garden-influence-view.mjs?v=20261015-21';
 const $=id=>document.getElementById(id);
 const weatherScene=createWeatherScene(document.querySelector('.app'));
 installSpriteFallbacks(document);
@@ -30,7 +28,6 @@ profile=reconcileCampaign(profile,campaign);
 const loaded=loadRun(storage);
 let state=loaded.state&&canPlay(campaign,loaded.state.stageId)?loaded.state:newRun(undefined,1);
 let adviceState=null,adviceCache=new Map(),explanationState=null,explanationCache=new Map();
-let inspectedIndex=null,influencePreviewIndex=null,influenceState=null,influenceCache=new Map();
 let selected=null,busy=false,sound=profile.options.sound,audioContext=null,sheetMode='',rotatedSheet=false,helpPage=0,zoomMode=false,zoomZone=0,stagePage=Math.floor((state.stageId-1)/10);
 const music=createGardenMusic({audio:$('garden-bgm'),getContext:getAudioContext,enabled:profile.options.music,volume:profile.options.musicVolume,onChange:updateMusicStatus});
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -76,7 +73,6 @@ function fitBoard(){const frame=$('garden-frame'),space=$('board-space').getBoun
  frame.style.width=Math.floor(width)+'px';frame.style.height=Math.floor(height)+'px';
  const gap=Number.parseFloat(getComputedStyle($('board')).gap)||4,need=(width-px-gap*(state.cols-1))/state.cols<44;
  if(need!==zoomMode){zoomMode=need;renderBoard();}
- renderInfluence();
 }
 function renderBoard(planted=-1){feedback.clear();const previews=previewScores(),bestSlots=bestPreviewSlots(previews),singleZone=state.cols<=4&&state.rows<=4;$('board').style.setProperty('--cols',state.cols);$('board').style.setProperty('--rows',state.rows);$('board').setAttribute('aria-label',`${state.rows}행 ${state.cols}열 정원${zoomMode?', '+(singleZone?'눌러서 크게 보세요':'구역을 눌러 확대하세요'):''}`);$('board').innerHTML=state.board.map((_,i)=>plotHTML(i,!zoomMode,previews,planted,'plot',bestSlots)).join('');$('garden-frame').classList.toggle('overview',zoomMode);$('zoom-zones').hidden=!zoomMode;$('zoom-zones').classList.toggle('single-zone',singleZone);$('zoom-zones').innerHTML=zoomMode?(singleZone?['정원 크게 보기']:['왼쪽 위','오른쪽 위','왼쪽 아래','오른쪽 아래']).map((name,i)=>`<button data-zone="${i}" aria-label="${singleZone?name:name+' 정원 확대'}" ${busy?'disabled':''}><span aria-hidden="true">${name} ⊕</span></button>`).join(''):'';$('board-hint').textContent=zoomMode?(singleZone?'정원을 눌러 크게 심기':'구역을 눌러 크게 심기'):'✧　✿　✧';}
 function adviceFor(id){if(adviceState!==state){adviceState=state;adviceCache=new Map();}if(!adviceCache.has(id))adviceCache.set(id,seedAdvice(state,id));return adviceCache.get(id);}
@@ -90,56 +86,7 @@ function adviceText(a){return `<div class="strategy-lines"><p><b>지금 효과</
 function seedInlineHTML(id){const c=seedInlineCopy(state,id);if(!c)return '';
  return `<div class="seed-inline"><div class="seed-inline-head"><strong>${escape(c.name)}의 특성</strong><span>${escape(c.baseLabel)}</span></div><div class="seed-inline-traits">${c.lines.map(line=>`<p class="${line===c.warning?'seed-inline-warning':''}">${escape(line)}</p>`).join('')}</div><p class="seed-inline-meta">${c.growth?'성장: '+escape(c.growth)+' · ':''}${escape(c.neighborNote)}</p></div>`;
 }
-function influenceFor(){
- if(busy||state.phase!=='plant')return null;
- if(influenceState!==state){influenceState=state;influenceCache=new Map();}
- const index=selected?(influencePreviewIndex??explanationFor(selected)?.index):inspectedIndex;
- if(!Number.isInteger(index))return null;
- const key=selected?`draft:${selected}:${index}`:`plant:${index}`;
- if(!influenceCache.has(key))influenceCache.set(key,selected?placementInfluence(state,selected,index):plantInfluence(state,index));
- return influenceCache.get(key);
-}
-function influenceShort(model){return model.targets.length?`다른 식물 ${model.targets.length}곳 · ${model.positiveDelta>0?'+'+model.positiveDelta+' ':''}${model.negativeDelta<0?model.negativeDelta+' ':''}${model.positiveDelta===0&&model.negativeDelta===0?'±0 ':''}점`:'다른 식물 점수 변화 없음';}
-function influenceSummaryHTML(model,prefix=''){
- const labels=[...new Set(model.targets.flatMap(t=>t.reasons.map(r=>r.label)))];
- return `<div class="influence-summary"><div class="influence-summary-head"><strong>${escape(model.source.name)}의 영향</strong><span>본인 ${model.ownScore}점</span></div><p><span class="${model.neighborDelta<0?'influence-loss':'influence-gain'}">${escape(influenceShort(model))}</span><br>${labels.length?escape(labels.slice(0,2).join(' · '))+(labels.length>2?' 외 '+(labels.length-2)+'가지':''):'다른 식물 수확은 같아요.'}<small class="influence-assumption">이 식물이 없을 때와 비교<br>현재 수확에 포함된 점수</small></p><div class="influence-summary-actions"><button id="${prefix}influence-detail">자세히</button><button id="${prefix}influence-close">표시 닫기</button></div></div>`;
-}
-function bindInfluenceSummary(prefix='',returnZone=null){
- const detail=$(prefix+'influence-detail'),close=$(prefix+'influence-close');
- if(detail)detail.onclick=()=>{if(inspectedIndex!==null)tileDetail(inspectedIndex,returnZone);};
- if(close)close.onclick=()=>{inspectedIndex=null;influencePreviewIndex=null;render();if(returnZone!==null)openZoom(returnZone);};
-}
-function renderInfluence(){
- const model=influenceFor();drawInfluence($('board'),model,{preview:!!selected});
- const zoom=$('sheet-content').querySelector('.zoom-grid');if(zoom){drawInfluence(zoom,model,{preview:!!selected});if(model&&sheetMode==='zoom'){const visible=model.targets.filter(t=>zoom.querySelector(`[data-slot="${t.index}"]`)).length,outside=!zoom.querySelector(`[data-slot="${model.source.index}"]`);$('sheet-eyebrow').textContent=`기준 ${locationOf(model.source.index)} · ${outside?'화면 밖 · ':''}이 구역 ${visible}/${model.targets.length}곳`;}}
- if(model){
-  $('board-hint').textContent=`금빛칸 → 청록 + / 분홍 − · ${model.targets.length}곳 영향`;
-  if(selected)$('draft-title').textContent=model.targets.length?`주변 ${model.positiveDelta>0?'+'+model.positiveDelta:''}${model.positiveDelta>0&&model.negativeDelta<0?' / ':''}${model.negativeDelta<0?model.negativeDelta:model.positiveDelta===0?'±0':''}점`:'주변 점수 변화 없음';
- }else $('board-hint').textContent=zoomMode?(state.cols<=4&&state.rows<=4?'정원을 눌러 크게 심기':'구역을 눌러 크게 심기'):'✧　✿　✧';
-}
-function inspectPlant(index,returnZone=null){
- if(state.phase!=='plant'||state.board[index]?.type==='well'){tileDetail(index,returnZone);return;}
- selected=null;influencePreviewIndex=null;inspectedIndex=index;render();sfx.play('inspect',{type:state.board[index]?.type});haptic(5);
- if(returnZone!==null)openZoom(returnZone);
- const model=influenceFor();if(model)say(`${model.source.name}. ${locationOf(index)}. ${influenceShort(model)}. 식물이 있는 경우와 없는 경우의 오늘 수확 차이입니다.`);
-}
-function previewInfluenceAt(index){
- if(!selected||busy||state.phase!=='plant'||state.board[index]||influencePreviewIndex===index)return;
- influencePreviewIndex=index;renderInfluence();
-}
-function wireInfluencePreview(board){
- board.addEventListener('pointerover',e=>{if(e.pointerType!=='mouse')return;const b=e.target.closest('[data-slot]');if(b)previewInfluenceAt(Number(b.dataset.slot));});
- board.addEventListener('focusin',e=>{const b=e.target.closest('[data-slot]');if(b)previewInfluenceAt(Number(b.dataset.slot));});
- board.addEventListener('pointerleave',()=>{if(selected&&influencePreviewIndex!==null){influencePreviewIndex=null;renderInfluence();}});
-}
-function renderSeedStrategy(){
- const box=$('seed-strategy'),model=!selected?influenceFor():null,shown=!!selected||!!model;
- box.hidden=!shown;document.querySelector('.game').classList.toggle('has-seed-advice',shown);$('tip').hidden=shown;
- document.querySelector('.draft').classList.toggle('influence-ready',!!model&&state.placements===picksToday(state));
- box.innerHTML=selected?seedInlineHTML(selected):model?influenceSummaryHTML(model):'';
- if(model){$('draft-title').textContent='이 식물이 주변에 주는 효과';bindInfluenceSummary();}
-}
-
+function renderSeedStrategy(){const box=$('seed-strategy');box.hidden=!selected;document.querySelector('.game').classList.toggle('has-seed-advice',!!selected);$('tip').hidden=!!selected;box.innerHTML=selected?seedInlineHTML(selected):'';}
 
 function render(planted=-1){const activeId=document.activeElement?.id,st=stage(),result=resultFor(),isPlant=state.phase==='plant',ready=isPlant&&state.placements===picksToday(state),weather=weatherData()[state.weather[state.day-1]],tomorrow=weatherData()[state.weather[state.day]];
  $('stage-label').textContent=`${st.id}단계 · ${st.cols}×${st.rows} · ∞`;$('stage-button').setAttribute('aria-label',`${st.id}단계 ${st.name}. 단계 선택`);$('home-button').setAttribute('aria-label','시작 화면으로');
@@ -160,7 +107,7 @@ function render(planted=-1){const activeId=document.activeElement?.id,st=stage()
  $('tip').textContent=selected?(zoomMode?'원하는 구역을 누르면 크게 보고 심을 수 있어요.':'땅의 숫자 = 정원 전체의 수확 변화량'):state.phase==='over'?'결과를 보고 다음 전략을 정해 보세요.':state.phase==='evolve'?'정원의 식물을 누르거나 아래에서 진화를 골라요.':state.phase==='upgrade'?'성장 보너스는 이 단계가 끝날 때까지 유지돼요.':ready?'수확 전에는 되돌려서 자리를 바꿀 수 있어요.':'옆 = 상하좌우 · 대각선 제외\n오늘 최대 = 지금 심었을 때 정원 전체 증가량';
  if(state.version>=6&&isPlant&&!selected&&!ready){const m=missionFor(state);if(m?.kind==='weather'){const paid=profile.claimedMissions.includes(`${state.stageId}:${m.day}`);$('tip').textContent=`🐰 ${m.title} · 새로 한 송이 심기\n${paid?'이미 꽃잎 보상을 받은 부탁이에요':m.complete?'✓ 해결! 수확하면 꽃잎 +2':'오늘 날씨 보너스를 받으면 꽃잎 +2'}\n토끼 모모를 누르면 자세히 볼 수 있어요`;}}
  $('undo').disabled=busy||!isPlant||!state.history.length;$('harvest').disabled=busy||(isPlant&&!ready);$('harvest').textContent=busy?'정원이 자라고 있어요…':state.phase==='over'?'단계 결과 보기 ↗':state.phase==='evolve'?'식물 진화시키기 ✦':state.phase==='upgrade'?'성장 보너스 고르기 ✦':ready?`수확하기 · +${result.total} ✦`:`씨앗 ${picksToday(state)-state.placements}개를 더 심어요`;
- renderSeedStrategy();renderInfluence();renderMission();applyDecoration();for(const id of ['help','score-button','settings','stage-button','home-button'])$(id).disabled=busy;
+ renderSeedStrategy();renderMission();applyDecoration();for(const id of ['help','score-button','settings','stage-button','home-button'])$(id).disabled=busy;
  if(homeVisible)renderHomeInfo();
  if(activeId&&$(activeId)&&!$(activeId).disabled)$(activeId).focus({preventScroll:true});
 }
@@ -183,19 +130,18 @@ function showSeedDiscovery(){
 function beginSeedDiscovery(){discoveryQueue=seedDiscovery.unseen(stage().pool);discoveryIndex=0;showSeedDiscovery();}
 const primaryButton=(id,text)=>`<button class="primary" id="${id}">${text}</button>`;
 function openZoom(zone=0){const singleZone=state.cols<=4&&state.rows<=4;zoomZone=singleZone?0:zone;zone=zoomZone;const startCol=zone%2?Math.max(0,state.cols-4):0,startRow=zone>=2?Math.max(0,state.rows-4):0,cols=Math.min(4,state.cols),rows=Math.min(4,state.rows),cells=Array.from({length:rows*cols},(_,i)=>(startRow+Math.floor(i/cols))*state.cols+startCol+i%cols),previews=previewScores(),bestSlots=bestPreviewSlots(previews);
- openSheet('zoom',`${startRow+1}–${startRow+rows}행 · ${startCol+1}–${startCol+cols}열`,selected?`${seeds()[selected].name} · 오늘 ${state.placements}/${picksToday(state)}`:`${stage().id}단계 · 확대 정원`,`<div class="zoom-grid" style="--cols:${cols};--rows:${rows}">${cells.map(i=>plotHTML(i,true,previews,-1,'zoom',bestSlots)).join('')}</div><div class="zoom-cards">${state.phase==='plant'&&state.placements<picksToday(state)?cardsHTML().replaceAll('id="seed-','id="zoom-seed-'):''}</div>${selected?`<aside class="zoom-seed-inline" id="zoom-seed-advice" aria-live="polite">${seedInlineHTML(selected)}</aside>`:influenceFor()?`<aside class="zoom-seed-inline influence-inspection" id="zoom-seed-advice" aria-live="polite">${influenceSummaryHTML(influenceFor(),'zoom-')}</aside>`:'<p class="zoom-tip" id="zoom-tip">씨앗을 고르면 특성, 식물을 누르면 주변 효과가 나와요.</p>'}<div class="guide-pages"><button class="secondary" id="zone-prev" ${singleZone?'hidden':''}>← 옆 구역</button><button class="secondary" id="zoom-close">전체 정원</button><button class="secondary" id="zone-next" ${singleZone?'hidden':''}>옆 구역 →</button></div>`);
+ openSheet('zoom',`${startRow+1}–${startRow+rows}행 · ${startCol+1}–${startCol+cols}열`,selected?`${seeds()[selected].name} · 오늘 ${state.placements}/${picksToday(state)}`:`${stage().id}단계 · 확대 정원`,`<div class="zoom-grid" style="--cols:${cols};--rows:${rows}">${cells.map(i=>plotHTML(i,true,previews,-1,'zoom',bestSlots)).join('')}</div><div class="zoom-cards">${state.phase==='plant'&&state.placements<picksToday(state)?cardsHTML().replaceAll('id="seed-','id="zoom-seed-'):''}</div>${selected?`<aside class="zoom-seed-inline" id="zoom-seed-advice" aria-live="polite">${seedInlineHTML(selected)}</aside>`:'<p class="zoom-tip" id="zoom-tip">씨앗을 고르면 아래에 특성이 나와요.</p>'}<div class="guide-pages"><button class="secondary" id="zone-prev" ${singleZone?'hidden':''}>← 옆 구역</button><button class="secondary" id="zoom-close">전체 정원</button><button class="secondary" id="zone-next" ${singleZone?'hidden':''}>옆 구역 →</button></div>`);
  $('zone-prev').onclick=()=>openZoom((zoomZone+3)%4);$('zone-next').onclick=()=>openZoom((zoomZone+1)%4);$('zoom-close').onclick=closeSheet;
  $('sheet-content').querySelectorAll('[data-seed]').forEach(b=>b.onclick=()=>selectSeed(b.dataset.seed,zoomZone));
- $('sheet-content').querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.slot);if(state.board[i]){inspectPlant(i,zoomZone);return;}if(plantAt(i)){if(state.placements>=picksToday(state)){closeSheet();plantFeedback(i);}else {openZoom(zoomZone);plantFeedback(i);}}else{($('zoom-tip')||$('zoom-seed-advice')).textContent=state.phase==='plant'&&state.placements<picksToday(state)?'아래 씨앗에서 하나를 먼저 골라 주세요.':'전체 정원으로 돌아가 수확·보너스·결과를 진행해 주세요.';}});
- bindInfluenceSummary('zoom-',zoomZone);wireInfluencePreview($('sheet-content').querySelector('.zoom-grid'));renderInfluence();
+ $('sheet-content').querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.slot);if(state.board[i]){tileDetail(i,zoomZone);return;}if(plantAt(i)){if(state.placements>=picksToday(state)){closeSheet();plantFeedback(i);}else {openZoom(zoomZone);plantFeedback(i);}}else{($('zoom-tip')||$('zoom-seed-advice')).textContent=state.phase==='plant'&&state.placements<picksToday(state)?'아래 씨앗에서 하나를 먼저 골라 주세요.':'전체 정원으로 돌아가 수확·보너스·결과를 진행해 주세요.';}});
 }
-function selectSeed(id,returnZone=null){if(busy||state.phase!=='plant'||state.placements>=picksToday(state))return;inspectedIndex=null;influencePreviewIndex=null;selected=id;render();sfx.play('select',{type:id});haptic(5);if(returnZone!==null)openZoom(returnZone);say(`${seeds()[id].name} 선택. 금빛 기준 칸에서 다른 식물에 주는 효과를 표시했어요. 아래 특성을 확인하고 빈 땅에 바로 심으세요.`);}
-function plantAt(index){if(busy||state.phase!=='plant'||!selected||state.placements>=picksToday(state))return false;const next=plant(state,index,selected);if(next===state)return false;const plantedType=selected,name=seeds()[selected].name,wasComplete=missionFor(state)?.complete;state=next;selected=null;inspectedIndex=index;influencePreviewIndex=null;persist();render(index);sfx.play('plant',{type:plantedType});haptic(9);plantFeedback(index);const mission=missionFor(state);if(!wasComplete&&mission?.complete){const paid=profile.claimedMissions.includes(`${state.stageId}:${mission.day}`);if(!paid)sfx.play('mission');toast(paid?'부탁 해결! 보상은 이미 받았어요':'모모의 부탁 해결! 수확하면 꽃잎 +2');haptic([9,35,15]);}say(`${name} 심기 완료. 오늘 ${state.placements}/${picksToday(state)}, 수확 예상 ${forecast(state).total}점.`);return true;}
+function selectSeed(id,returnZone=null){if(busy||state.phase!=='plant'||state.placements>=picksToday(state))return;selected=id;render();sfx.play('select',{type:id});haptic(5);if(returnZone!==null)openZoom(returnZone);say(`${seeds()[id].name} 선택. 아래 특성을 확인하고 빈 땅에 바로 심으세요.`);}
+function plantAt(index){if(busy||state.phase!=='plant'||!selected||state.placements>=picksToday(state))return false;const next=plant(state,index,selected);if(next===state)return false;const plantedType=selected,name=seeds()[selected].name,wasComplete=missionFor(state)?.complete;state=next;selected=null;persist();render(index);sfx.play('plant',{type:plantedType});haptic(9);plantFeedback(index);const mission=missionFor(state);if(!wasComplete&&mission?.complete){const paid=profile.claimedMissions.includes(`${state.stageId}:${mission.day}`);if(!paid)sfx.play('mission');toast(paid?'부탁 해결! 보상은 이미 받았어요':'모모의 부탁 해결! 수확하면 꽃잎 +2');haptic([9,35,15]);}say(`${name} 심기 완료. 오늘 ${state.placements}/${picksToday(state)}, 수확 예상 ${forecast(state).total}점.`);return true;}
 function help(page=0){const catalog=seeds(),catalogStages=previousRules()?.STAGES??STAGES,ids=Object.keys(catalog).sort((a,b)=>catalogStages.find(s=>s.pool.includes(a)).id-catalogStages.find(s=>s.pool.includes(b)).id),plantPages=Math.ceil(ids.length/3),rewardsPage=plantPages+1,lastPage=plantPages+2,pages=lastPage+1;helpPage=Math.max(0,Math.min(pages-1,page));let html='';
  if(helpPage===0)html=`<div class="guide-steps"><div class="guide-step"><span>1</span><div><strong>7일의 수확으로 목표에 도전해요</strong><p>총점이 최소 목표 이상이면 다음 단계가 열려요. 씨앗과 날씨는 같아도 배치에 따라 결과가 달라져요.</p></div></div><div class="guide-step"><span>2</span><div><strong>같은 식물을 세로로 모아 보세요</strong><p>${state.version<4?'이전 규칙으로 이어가는 정원이에요. 새 규칙은 시작 화면에서 선택할 수 있어요.':'같은 열 2개면 각각 +2, 3개 +4, 4개 이상 +6. 떨어져 있어도 돼요. 우물·벌집은 제외해요.'}</p></div></div><div class="guide-step"><span>3</span><div><strong>${state.version>=5?'식물 진화 + 정원 성장':'성장 보너스도 내 전략에 맞게'}</strong><p>${state.version>=6?'1·3·5일 수확 뒤 한 송이를 골라 2단계 또는 3단계로 키워요. ':state.version===5?'1·3·5일 수확 뒤 처음 여섯 종류 중 한 송이를 진화시켜요. ':''}2·4·6일에는 정원 능력을 하나 골라요.${state.version===2?' 새 규칙으로 시작하면 제안 새로고침도 열려요.':' 마음에 드는 제안이 없으면 매 선택마다 한 번 무료로 새로고침해요.'}</p></div></div></div><p class="sheet-note">끝없는 단계 · 4×4 → 7×7 · 수확 전 되돌리기</p>`;
  else if(helpPage<=plantPages){const entries=ids.slice((helpPage-1)*3,helpPage*3),stages=previousRules()?.STAGES??STAGES;html=`<div class="plant-guide">${entries.map(id=>{const unlock=stages.find(s=>s.pool.includes(id)).id;return `<article>${plantArt(id,2,{small:true})}<div><h3>${catalog[id].name} <small>${unlock===1?'처음부터':unlock+'단계 해금'}</small></h3><p>${catalog[id].description}</p></div></article>`;}).join('')}</div><p class="sheet-note">현재 ${stage().pool.length}종 / 전체 ${ids.length}종.<br>이웃은 상하좌우. 개별 점수는 식물을 눌러 확인해요.</p>`;}
  else if(helpPage===rewardsPage)html=`<div class="sheet-body"><p><strong>모모의 부탁</strong>은 2·4·6일에 찾아와요. 해결하고 수확하면 꽃잎 +2. 같은 단계의 같은 날 보상은 한 번만 받아요. 놓쳐도 감점은 없어요.</p><p><strong>각 단계 첫 클리어는 꽃잎 +3.</strong> 꽃잎을 모으면 꾸미기 수첩의 장식이 열려요. 장식을 골라도 꽃잎은 줄지 않아요.</p><p><strong>목표를 넘겨 별을 모아요.</strong><br>목표 100% ★ · 115% ★★ · 140% ★★★<br>재도전으로 더 높은 별 기록에 도전해 보세요.</p></div><p class="sheet-note">꽃잎과 장식은 수확 점수에 영향을 주지 않아요.</p>`;
- else html=`<div class="sheet-body"><p><strong>같은 날씨, 다른 정원으로.</strong> 101단계부터도 7×7 새 정원은 계속 이어져요. 재도전은 같은 씨앗과 날씨, 다른 배치로 도전해요.</p><p><strong>이 브라우저에 자동 저장돼요.</strong> 현재 정원·해금·최고 기록을 이어갈 수 있어요. 다른 기기와 동기화되지 않으며 브라우저 데이터를 지우면 사라져요.</p><p>${state.version<4?'진행 중인 정원은 기존 규칙으로 보존했어요. 아래에서 다시 시작하면 세로열 보너스와 높은 목표가 적용돼요.':'다시 시작해도 이미 깬 단계와 최고 기록, 꽃잎과 장식은 남아요.'}</p></div><div class="sheet-actions"><button class="secondary" id="reset-run">${state.version<4?'새 규칙으로 이 단계 시작':'이 단계 처음부터'}</button></div><p class="sheet-note">주변 효과가 보이는 정원 v21 · 정식 판매 버전이 아닙니다.</p>`;
+ else html=`<div class="sheet-body"><p><strong>같은 날씨, 다른 정원으로.</strong> 101단계부터도 7×7 새 정원은 계속 이어져요. 재도전은 같은 씨앗과 날씨, 다른 배치로 도전해요.</p><p><strong>이 브라우저에 자동 저장돼요.</strong> 현재 정원·해금·최고 기록을 이어갈 수 있어요. 다른 기기와 동기화되지 않으며 브라우저 데이터를 지우면 사라져요.</p><p>${state.version<4?'진행 중인 정원은 기존 규칙으로 보존했어요. 아래에서 다시 시작하면 세로열 보너스와 높은 목표가 적용돼요.':'다시 시작해도 이미 깬 단계와 최고 기록, 꽃잎과 장식은 남아요.'}</p></div><div class="sheet-actions"><button class="secondary" id="reset-run">${state.version<4?'새 규칙으로 이 단계 시작':'이 단계 처음부터'}</button></div><p class="sheet-note">날씨와 3단계 진화 정원 v22 · 정식 판매 버전이 아닙니다.</p>`;
  html+=`<div class="guide-pages"><button class="secondary" id="help-prev" ${helpPage===0?'disabled':''}>← 이전</button><span>${helpPage+1} / ${pages}</span><button class="secondary" id="help-next">${helpPage===lastPage?'닫기':'다음 →'}</button></div>`;
  openSheet('help',helpPage===0?'다르게 심어, 더 크게':helpPage===rewardsPage?'모모와 꽃잎, 별':helpPage===lastPage?'다시, 다른 선택으로':'식물 도감','HOW TO GROW',html);$('help-prev').onclick=()=>help(helpPage-1);$('help-next').onclick=()=>helpPage===lastPage?closeSheet():help(helpPage+1);if($('reset-run'))$('reset-run').onclick=()=>confirmStage(state.stageId);
 }
@@ -224,7 +170,7 @@ function stagesMenu(page=Math.floor((state.stageId-1)/10)){
 }
 function stageIntro(){const st=stage();openSheet('intro',`${st.id}단계 · ${st.name}`,'GROW AT YOUR OWN PACE',`<div class="intro-goal"><span>클리어 최소 점수</span><strong>${st.target}<small>점</small></strong></div><div class="stat-grid"><div><strong>${st.cols}×${st.rows}</strong><small>정원 크기</small></div><div><strong>${st.pool.length}종</strong><small>사용할 씨앗</small></div><div><strong>7일</strong><small>수확 기간</small></div></div>${state.version>=5?'<p class="evolution-intro">✦ 첫 수확 뒤, 식물 한 송이가 진화해요.<br>같은 씨앗도 어떤 모습으로 키울지는 당신의 선택.</p>':''}${st.unlocks.length?`<p class="unlock-heading">이번에 만날 새 식물</p><div class="unlock-plants ${st.unlocks.length>3?'many':''}">${st.unlocks.map(id=>`<span>${plantArt(id,2,{small:true})}<strong>${seeds()[id].name}</strong><small>${seeds()[id].short}</small></span>`).join('')}</div>`:`<p class="sheet-body">${st.id>100?'끝없는 정원이에요. 새로운 씨앗·날씨·우물 배치에 맞춰 키워 보세요.':st.cols>=6?'커진 정원은 구역을 눌러 확대할 수 있어요.':'오늘과 내일 날씨, 우물 위치를 먼저 살펴보세요.'}</p>`}<p class="sheet-note">7일 총합 ${st.target}점 이상이면 다음 단계가 열려요.<br>이 단계에서는 하루 ${Math.min(...st.picksPerDay)===Math.max(...st.picksPerDay)?picksToday(state):Math.min(...st.picksPerDay)+'–'+Math.max(...st.picksPerDay)}개를 심습니다.</p><div class="sheet-actions">${primaryButton('begin-stage','정원 키우기 →')}</div>`);$('begin-stage').onclick=beginSeedDiscovery;}
 function confirmStage(id){const next=stageFor(id);openSheet('reset',`${id}단계를 시작할까요?`,'A FRESH START',`<div class="sheet-body"><p>진행 중인 정원은 새로 시작합니다. 이미 깬 단계와 최고 점수, 꽃잎과 장식은 그대로 남아요.</p><p><strong>${next.pool.length}종 씨앗 · 목표 ${next.target}점</strong><br>새 정원은 3단계 진화와 날씨 부탁이 적용돼요. 1·3·5일에 집중 육성하거나 다른 식물을 진화시켜요.</p></div><div class="sheet-actions"><button class="secondary" id="cancel-reset">계속 키우기</button><button class="primary" id="confirm-reset">새 정원 시작</button></div>`);$('cancel-reset').onclick=closeSheet;$('confirm-reset').onclick=()=>startStage(id);}
-function startStage(id){if(!canPlay(campaign,id))return;closeSheet();hideHome();lastClearReward=0;lastMissionReward=0;state=newRun(undefined,id);selected=null;inspectedIndex=null;influencePreviewIndex=null;persist();render();sfx.play('inspect');stageIntro();say(`${id}단계. 목표 ${stage().target}점.`);}
+function startStage(id){if(!canPlay(campaign,id))return;closeSheet();hideHome();lastClearReward=0;lastMissionReward=0;state=newRun(undefined,id);selected=null;persist();render();sfx.play('inspect');stageIntro();say(`${id}단계. 목표 ${stage().target}점.`);}
 function journal(){const max=Math.max(1,...state.harvests.map(r=>r.total));openSheet('journal',`${state.stageId}단계 정원 기록`,`${stage().name} · ${stage().cols}×${stage().rows}`,`<div class="stat-grid"><div><strong>${state.score}</strong><small>누적 점수</small></div><div><strong>${stage().target}</strong><small>최소 목표</small></div><div><strong>${campaign.stages[state.stageId]?.best||0}</strong><small>단계 최고</small></div></div><div class="chart" aria-label="하루별 수확">${Array.from({length:RUN_DAYS},(_,i)=>`<div class="chart-bar" style="height:${state.harvests[i]?Math.max(5,state.harvests[i].total/max*100):3}%"><span>${state.harvests[i]?.total||'·'}</span><small>${i+1}일</small></div>`).join('')}</div><div class="result-badges">${state.board.filter(t=>t?.evolution).map(t=>`<span>✦ ${evolutionName(t)}</span>`).join('')}${state.upgrades.length?state.upgrades.map(id=>`<span>${abilities()[id].icon} ${abilities()[id].name}</span>`).join(''):'<span>2·4·6일 성장 보너스 선택</span>'}</div><p class="sheet-note">이번 단계는 ${stage().pool.length}종을 사용할 수 있어요.<br>남은 ${RUN_DAYS-state.harvests.length}일 동안 목표를 넘겨 보세요.</p><div class="sheet-actions">${state.lastHarvest?'<button class="secondary" id="last-harvest-report">지난 수확 자세히</button>':''}${primaryButton('journal-close','정원으로')}</div>`);$('journal-close').onclick=closeSheet;if($('last-harvest-report'))$('last-harvest-report').onclick=report;}
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function doHarvest(){
@@ -235,7 +181,7 @@ async function doHarvest(){
  if(state.placements!==picksToday(state))return;
  const scoreBefore=state.score,target=stage().target,next=harvest(state),r=next.lastHarvest;
  if(next===state||!r)return;
- busy=true;selected=null;inspectedIndex=null;influencePreviewIndex=null;render();state=next;
+ busy=true;selected=null;render();state=next;
  const beforePetals=profile.petals;
  profile=claimHarvest(profile,state);lastMissionReward=profile.petals-beforePetals;lastClearReward=0;
  saveRecord();lastDecorUnlocks=Object.values(DECORATIONS).filter(d=>d.threshold>beforePetals&&d.threshold<=profile.petals);
@@ -260,11 +206,10 @@ async function doHarvest(){
  say(`${r.day}일째 ${r.total}점 수확, 누적 ${state.score}점.${lastMissionReward?' 부탁 보상 꽃잎 '+lastMissionReward+'개.':''}`);
 }
 $('seed-cards').addEventListener('click',e=>{const b=e.target.closest('[data-seed]');if(b)selectSeed(b.dataset.seed);});
-$('board').addEventListener('click',e=>{const b=e.target.closest('[data-slot]');if(!b||busy)return;const index=Number(b.dataset.slot);if(state.board[index])inspectPlant(index);else if(!plantAt(index)&&state.phase==='plant'&&state.placements<picksToday(state)){$('tip').textContent='아래에서 씨앗을 먼저 골라 주세요.';say('씨앗을 먼저 골라 주세요.');}});
-wireInfluencePreview($('board'));
+$('board').addEventListener('click',e=>{const b=e.target.closest('[data-slot]');if(!b||busy)return;const index=Number(b.dataset.slot);if(state.board[index])tileDetail(index);else if(!plantAt(index)&&state.phase==='plant'&&state.placements<picksToday(state)){$('tip').textContent='아래에서 씨앗을 먼저 골라 주세요.';say('씨앗을 먼저 골라 주세요.');}});
 $('zoom-zones').addEventListener('click',e=>{const b=e.target.closest('[data-zone]');if(b&&!busy)openZoom(Number(b.dataset.zone));});
 $('board').addEventListener('keydown',e=>{const b=e.target.closest('[data-slot]');if(!b)return;const i=Number(b.dataset.slot),moves={ArrowLeft:-1,ArrowRight:1,ArrowUp:-state.cols,ArrowDown:state.cols};if(e.key in moves){e.preventDefault();const next=i+moves[e.key];if(next>=0&&next<state.board.length&&(!(e.key==='ArrowLeft'||e.key==='ArrowRight')||Math.floor(next/state.cols)===Math.floor(i/state.cols)))$('plot-'+next)?.focus();}});
-$('undo').onclick=()=>{if(busy)return;const next=undo(state);if(next===state)return;state=next;selected=null;inspectedIndex=null;influencePreviewIndex=null;persist();render();sfx.play('undo');haptic(6);say('마지막 배치와 씨앗 제안을 복원했어요.');};
+$('undo').onclick=()=>{if(busy)return;const next=undo(state);if(next===state)return;state=next;selected=null;persist();render();sfx.play('undo');haptic(6);say('마지막 배치와 씨앗 제안을 복원했어요.');};
 $('harvest').onclick=doHarvest;$('help').onclick=()=>help(0);$('score-button').onclick=journal;$('stage-button').onclick=()=>stagesMenu();$('home-button').onclick=showHome;$('settings').onclick=settings;
 $('home-sound').onclick=()=>{profile=setOptions(profile,{sound:!sound});sound=profile.options.sound;persist();if(sound)sfx.play('plant',{type:'sunflower'});else sfx.stop();renderHomeInfo();updateSoundControls();};
 $('home-preview').onclick=evolutionGuide;$('home-play').onclick=resumeGarden;$('home-stages').onclick=()=>stagesMenu();$('home-collection').onclick=collection;$('home-settings').onclick=settings;$('home-new-rules').onclick=()=>confirmStage(state.stageId);$('mission-button').onclick=missionSheet;
