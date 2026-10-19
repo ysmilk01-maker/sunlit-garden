@@ -1,0 +1,186 @@
+/* v25. Reserved advertising surfaces, outside the live garden controls. */
+.garden-ad-slot {
+  display: grid;
+  grid-template-columns: 23px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  padding: 2px 7px;
+  border: 1px dashed #a8b6a1;
+  border-radius: 6px;
+  background: #e9ede2;
+  color: #49624e;
+  box-shadow: none;
+}
+.ad-tag {
+  display: inline-grid;
+  place-items: center;
+  min-width: 23px;
+  min-height: 17px;
+  padding: 2px 4px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  color: #6b7d68;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 750;
+  letter-spacing: .6px;
+}
+.ad-slot-copy { min-width: 0; }
+.ad-slot-copy strong,
+.ad-slot-copy small { display: block; }
+.ad-slot-copy strong { font-size: 11px; line-height: 1.35; font-weight: 650; }
+.ad-slot-copy small { margin-top: 3px; font-size: 9px; line-height: 1.3; color: #6a7964; }
+.ad-preview-button {
+  min-width: 60px;
+  min-height: 44px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #506c54;
+  font-size: 10px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.garden-ad-slot--banner { background: #dbe4d015; border-color: #9aaa7b66; color: #d8dfc9; }
+.garden-ad-slot--banner .ad-tag { color: #9fb394; }
+.garden-ad-slot--banner .ad-slot-copy small { color: #b4c0a9; }
+.garden-ad-slot--banner .ad-preview-button { color: #d6e1ca; }
+.garden-ad-slot--reward { min-height: 54px; margin-top: 8px; background: #e8eadf; }
+
+/* Tier-three art normally has a 100px wrapper; a postcard cell owns its size. */
+.result-postcard .mini-garden > span { position: relative; overflow: hidden; isolation: isolate; }
+.result-postcard .mini-garden .master-art {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+.result-postcard .mini-garden .master-plant { width: auto; height: auto; max-width: 82%; max-height: 82%; }
+.result-postcard .mini-garden :is(.master-aura, .master-crown) { overflow: hidden; filter: none; }
+
+/* A separate modal preserves the result screen and its normal next button. */
+#ad-preview {
+  width: calc(100% - 24px);
+  max-width: 420px;
+  height: min(650px, calc(100dvh - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid #a8b598;
+  border-radius: 12px;
+  background: #f6f5eb;
+  color: #36513e;
+}
+#ad-preview[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 12px;
+}
+#ad-preview::backdrop { background: #061c17ce; backdrop-filter: blur(6px); }
+#ad-preview .sheet-heading { margin: 0; min-height: 44px; }
+#ad-preview .sheet-heading h2 { font-size: 20px; letter-spacing: -.5px; }
+#ad-preview .icon-button,
+#ad-preview .ad-preview-close {
+  flex: 0 0 44px;
+  min-width: 44px;
+  width: 44px;
+  min-height: 44px;
+  height: 44px;
+  border: 1px solid #d0d8c6;
+  border-radius: 7px;
+  background: #e6ebde;
+  color: #4c6850;
+}
+.ad-preview-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 24px 14px;
+  border: 1px solid #c5d0b4;
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 50% 35%, #faf8e7, #e0e7d1 76%);
+  text-align: center;
+  overflow: hidden;
+}
+.ad-preview-stage > .ad-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 5px 6px;
+  font-size: 9px;
+  letter-spacing: .2px;
+}
+.ad-preview-art { flex: 0 1 auto; width: 160px; max-width: 66%; min-height: 0; margin: 0 0 14px; }
+.ad-preview-art > :is(img, svg, .plant-art) { display: block; width: 100%; height: auto; max-height: 190px; object-fit: contain; }
+.ad-preview-stage :is(h2, h3, .ad-preview-headline) { margin: 0 0 9px; font-size: 22px; line-height: 1.35; letter-spacing: -.6px; color: #395a42; }
+.ad-preview-stage > p { font-size: 12px; line-height: 1.6; color: #64745a; word-break: keep-all; }
+.ad-preview-note { margin: 0; color: #687762; font-size: 11px; line-height: 1.55; text-align: center; word-break: keep-all; }
+.ad-preview-back { width: 100%; min-height: 44px; margin: 0; border-radius: 7px; }
+#ad-preview button:focus-visible { outline: 3px solid #967535; outline-offset: 2px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .ad-preview-button:hover { background: #a5b59b25; }
+}
+
+@media (max-height: 700px) and (orientation: portrait) {
+  dialog[data-mode="result"] { padding: 12px 14px; }
+  dialog[data-mode="result"] .sheet-heading { min-height: 44px; margin-bottom: 6px; }
+  dialog[data-mode="result"] .sheet-heading h2 { font-size: 19px; }
+  dialog[data-mode="result"] .result-postcard { padding: 6px 8px; }
+  dialog[data-mode="result"] .result-postcard .mini-garden { width: 88px; height: calc(88px * var(--rows, 4) / var(--cols, 4)); }
+  dialog[data-mode="result"] .stat-grid { margin: 7px 0; }
+  dialog[data-mode="result"] .result-rewards { margin: 6px 0; }
+  dialog[data-mode="result"] .result-next { padding: 5px 7px; font-size: 10px; line-height: 1.4; }
+  dialog[data-mode="result"] .sheet-actions { margin-top: 8px; }
+  dialog[data-mode="result"] .sheet-home-link { margin-top: 2px; }
+  #ad-preview { padding: 13px; }
+  #ad-preview[open] { gap: 9px; }
+  .ad-preview-art { width: 140px; margin-bottom: 11px; }
+}
+
+@media (max-height: 590px) and (orientation: portrait) {
+  .garden-ad-slot { gap: 6px; padding-inline: 6px; }
+  .garden-ad-slot--reward { min-height: 50px; margin-top: 6px; }
+  .ad-slot-copy strong { font-size: 10px; }
+  .ad-slot-copy small { font-size: 8px; margin-top: 2px; }
+  .ad-preview-button { min-width: 56px; padding-inline: 5px; }
+  dialog[data-mode="result"] .result-heading { margin: 0 0 3px; }
+  dialog[data-mode="result"] .result-heading .star { font-size: 22px; line-height: 1; }
+  dialog[data-mode="result"] .result-postcard { padding: 5px 7px; gap: 8px; }
+  dialog[data-mode="result"] .result-postcard .mini-garden { width: 76px; height: calc(76px * var(--rows, 4) / var(--cols, 4)); padding: 3px; gap: 2px; }
+  dialog[data-mode="result"] .result-postcard-copy > strong { font-size: 11px; line-height: 1.3; margin: 3px 0; }
+  dialog[data-mode="result"] .result-postcard-copy > span { font-size: 8px; line-height: 1.4; }
+  dialog[data-mode="result"] .stat-grid { margin: 5px 0; gap: 5px; }
+  dialog[data-mode="result"] .stat-grid > div { padding: 4px 3px; }
+  dialog[data-mode="result"] .stat-grid strong { font-size: 16px; line-height: 1.2; }
+  dialog[data-mode="result"] .stat-grid small { font-size: 8px; }
+  dialog[data-mode="result"] .result-rewards { margin: 4px 0; gap: 4px; }
+  dialog[data-mode="result"] .result-rewards > span { padding: 3px 5px; font-size: 8px; }
+  dialog[data-mode="result"] .result-next { padding-block: 4px; }
+  dialog[data-mode="result"] .sheet-actions { margin-top: 6px; }
+  dialog[data-mode="result"] .sheet-home-link { margin-top: 0; }
+  dialog[data-mode="result"] .harvest-reward-note { margin-bottom: 5px; padding: 4px 7px; font-size: 9px; }
+  #ad-preview .sheet-heading h2 { font-size: 18px; }
+  .ad-preview-stage { padding: 23px 10px 16px; }
+  .ad-preview-art { width: 118px; margin-bottom: 9px; }
+  .ad-preview-stage :is(h2, h3, .ad-preview-headline) { font-size: 19px; }
+  .ad-preview-stage > p, .ad-preview-note { font-size: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-preview-button, #ad-preview button { transition: none; }
+  .ad-preview-button:active, #ad-preview button:active { transform: none; }
+}
