@@ -134,13 +134,14 @@ export function createGardenFeedback({
     animate(effect, image, [{ opacity: .65 }, { opacity: 1 }], { duration: 160 });
   }
 
-  function play(cell, kind = 'plant', type = '') {
+  function play(cell, kind = 'plant', type = '', options = {}) {
     try {
       const effect = begin();
       const image = imageFor(cell);
       if (!effect) return;
       if (!image?.animate || cell.isConnected === false) { clear(); return; }
       const evolve = kind === 'evolve';
+      const master = evolve && options?.tier === 3;
       mark(effect, cell, evolve ? 'just-evolved' : 'just-planted');
       if (reduced.matches) {
         fadeImage(effect, image);
@@ -150,12 +151,25 @@ export function createGardenFeedback({
       const size = sizeOf(cell);
       const layer = node(effect, cell, `garden-festival garden-festival--${evolve ? 'evolve' : 'plant'}`, true);
       if (layer) {
-        const palette = evolve ? PRISM : PALETTES[type] || PALETTES.sunflower;
-        ripple(effect, layer, size * .85, { duration: evolve ? 880 : 580, prism: evolve, color: palette[0] });
-        ripple(effect, layer, size * .62, { delay: 60, duration: evolve ? 840 : 540, color: palette[1] });
-        particles(effect, layer, { count: evolve ? 14 : 9, size, palette, duration: evolve ? 760 : 700, spread: evolve ? 1.06 : .8 });
-        particles(effect, layer, { count: evolve ? 6 : 4, size, palette: PRISM, delay: 40, duration: evolve ? 700 : 650, spread: evolve ? 1.25 : 1, sparks: true });
+        const palette = PALETTES[type] || PALETTES.sunflower;
+        ripple(effect, layer, size * (master ? 1.02 : .85), { duration: master ? 760 : evolve ? 480 : 320, prism: master, color: palette[0] });
+        if (evolve) ripple(effect, layer, size * .62, { delay: master ? 60 : 40, duration: master ? 700 : 420, color: master ? '#ffe16c' : palette[1] });
+        particles(effect, layer, { count: master ? 16 : evolve ? 10 : 5, size, palette, duration: master ? 620 : evolve ? 380 : 260, spread: master ? 1.14 : evolve ? .96 : .66 });
+        particles(effect, layer, { count: master ? 8 : evolve ? 4 : 2, size, palette: master ? ['#ffe16c', '#fff4b4', '#ffdc66'] : palette, delay: 30, duration: master ? 620 : evolve ? 380 : 240, spread: master ? 1.34 : .88, sparks: true });
         if (!evolve) {
+          // A small soil puff lands with the seed; flowers appear after the impact.
+          for (let n = 0; n < 4; n++) {
+            const soil = node(effect, layer, 'festival-petal');
+            if (!soil) break;
+            soil.style.width = `${4 + n % 2}px`; soil.style.height = '4px';
+            soil.style.background = n % 2 ? '#a37545' : '#765438';
+            const x = (n < 2 ? -1 : 1) * size * (.18 + n % 2 * .14);
+            animate(effect, soil, [
+              { transform: 'translate(-50%,-50%) scale(.5)', opacity: 0 },
+              { offset: .3, transform: `translate(calc(-50% + ${x * .5}px),calc(-50% - 7px)) scale(1)`, opacity: .85 },
+              { transform: `translate(calc(-50% + ${x}px),calc(-50% + 3px)) scale(.6)`, opacity: 0 },
+            ], { duration: 210, delay: 70 });
+          }
           const seed = node(effect, layer, 'festival-seed');
           if (seed) animate(effect, seed, [
             { transform: 'translate(-50%,-240%) rotate(-28deg)', opacity: 1 },
@@ -165,22 +179,29 @@ export function createGardenFeedback({
         }
       }
       animate(effect, image, [
-        { transform: type === 'hive' ? 'translateY(-12%) scale(.94)' : 'translateY(12%) scale(.92)', opacity: .3 },
-        { offset: .62, transform: `translateY(-5%) scale(${evolve ? 1.13 : 1.09})`, opacity: 1 },
+        { transform: type === 'hive' ? 'translateY(-12%) scale(.94)' : 'translateY(12%) scale(.92)', opacity: .35 },
+        { offset: .62, transform: `translateY(-5%) scale(${master ? 1.2 : evolve ? 1.13 : 1.09})`, opacity: 1 },
         { transform: 'translateY(0) scale(1)', opacity: 1 },
-      ], { duration: 280 });
+      ], { duration: master ? 600 : evolve ? 440 : 280 });
       finish(effect);
     } catch { clear(); }
   }
 
-  function harvest(cells = []) {
+  function harvest(cells = [], options = {}) {
     try {
       const effect = begin();
       if (!effect) return;
-      const candidates = [...new Set(Array.from(cells))].filter(cell => cell?.isConnected !== false && imageFor(cell)?.animate);
+      const all = [...new Set(Array.from(cells))].filter(cell => cell?.isConnected !== false && imageFor(cell)?.animate);
+      const wanted = new Set(Array.isArray(options?.highlightIndices) ? options.highlightIndices.slice(0, 3) : []);
+      const indexOf = cell => Number(cell.dataset?.cell ?? cell.dataset?.slot);
+      const featured = all.filter(cell => wanted.has(indexOf(cell))).slice(0, 3);
+      const remaining = all.filter(cell => !featured.includes(cell));
+      const room = Math.min(MAX_HARVEST_CELLS - featured.length, remaining.length);
+      const candidates = [...featured, ...Array.from({ length: room }, (_, i) => remaining[room === 1 ? 0 : Math.floor(i * (remaining.length - 1) / (room - 1))])];
       const count = Math.min(MAX_HARVEST_CELLS, candidates.length);
       for (let index = 0; index < count; index++) {
-        const cell = candidates[count === 1 ? 0 : Math.floor(index * (candidates.length - 1) / (count - 1))];
+        const cell = candidates[index];
+        const highlighted = featured.includes(cell);
         const image = imageFor(cell);
         const delay = reduced.matches ? 0 : index * 30;
         mark(effect, cell, 'festival-harvesting');
@@ -188,15 +209,25 @@ export function createGardenFeedback({
         const size = sizeOf(cell);
         const layer = node(effect, cell, 'garden-festival garden-festival--harvest', true);
         if (layer) {
-          ripple(effect, layer, size * .85, { delay, duration: 520 });
+          ripple(effect, layer, size * (highlighted ? 1.04 : .85), { delay, duration: 520, color: highlighted ? '#ffe16c' : '#fff3ae' });
           particles(effect, layer, { count: 4, size, palette: PRISM, delay, duration: 560, spread: .78 });
           particles(effect, layer, { count: 2, size, palette: PRISM, delay, duration: 540, spread: 1, sparks: true });
         }
         animate(effect, image, [
           { transform: 'translateY(0) scale(1)' },
-          { offset: .45, transform: 'translateY(-5%) scale(1.1)' },
+          { offset: .45, transform: `translateY(-5%) scale(${highlighted ? 1.17 : 1.08})` },
           { transform: 'translateY(0) scale(1)' },
         ], { duration: 280, delay });
+      }
+      // Keep the score response in the same group so it never cancels the plants.
+      const target = options?.target;
+      if (count && target?.animate && target.isConnected !== false) {
+        if (reduced.matches) fadeImage(effect, target);
+        else animate(effect, target, [
+          { transform: 'scale(1)' },
+          { offset: .4, transform: 'scale(1.08)' },
+          { transform: 'scale(1)' },
+        ], { duration: 360, delay: 120 });
       }
       finish(effect);
     } catch { clear(); }

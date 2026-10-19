@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="./master-evolution.css?v=20261015-20">
 <link rel="stylesheet" href="./weather-scene.css?v=20261015-20">
 <link rel="stylesheet" href="./garden-ui.css?v=20261018-23">
+<link rel="stylesheet" href="./strategic-garden.css?v=20261020-24">
 <link rel="preload" as="image" href="./assets/atelier-v14/greenhouse-home-v14.webp">
 </head>
 <body>
@@ -29,7 +30,7 @@
     <div class="journey"><div class="journey-top"><h2><strong id="day">1</strong><span>일째 <small>/ 7</small></span></h2><div class="weather" id="weather"></div><button id="score-button" class="score-button" aria-label="정원 기록 보기" aria-haspopup="dialog"><span aria-hidden="true">✦</span><strong id="score">0</strong><small>햇살</small></button></div><div id="goal-meter" class="goal-meter" role="progressbar" aria-label="정원 목표 달성" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="goal-fill"></span><i aria-hidden="true">✦</i></div><div class="journey-bottom"><div id="days" class="days" aria-label="7일 진행"></div><span id="goal" class="goal"></span></div></div>
     <div class="board-space" id="board-space"><div class="garden-frame" id="garden-frame"><div class="garden-edge" aria-hidden="true"><span id="board-label">MY LITTLE GARDEN</span><span>✦</span></div><div id="board" class="board" aria-label="정원"></div><div id="zoom-zones" class="zoom-zones" hidden></div><div class="garden-floor" aria-hidden="true"><span id="board-hint">✧　✿　✧</span></div></div><div id="harvest-banner" class="harvest-banner" hidden></div></div>
     <div class="draft"><div class="draft-heading"><h3 id="draft-title">씨앗 하나를 골라요</h3><div class="forecast"><span id="forecast-label">오늘 수확 예상</span><strong id="forecast">+0 <small>햇살</small></strong><span id="combos"></span></div><span id="picks">오늘 0 / 2</span></div><div id="seed-cards" class="seed-cards"></div><div id="ready-card" class="ready-card" hidden><span aria-hidden="true">✦</span><div><strong>오늘의 정원이 준비됐어요</strong><p>수확하면 모든 식물이 한 번 더 자라요.</p></div></div><aside id="seed-strategy" class="seed-strategy" hidden aria-live="polite"></aside><p id="tip" class="tip">씨앗을 고른 뒤 빈 땅을 누르세요.</p></div>
-    <div class="actions"><button id="undo" class="secondary" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h9a6 6 0 0 1 0 12"/></svg><span>되돌리기</span></button><button id="harvest" class="primary" disabled>씨앗 2개를 심어 주세요</button></div>
+    <div class="actions"><button id="undo" class="secondary" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 4 10l5 5M4 10h9a6 6 0 0 1 0 12"/></svg><span>되돌리기</span></button><button id="transplant" class="secondary" aria-label="옮겨심기 · 한 정원에 한 번" aria-pressed="false" hidden></button><button id="harvest" class="primary" disabled>씨앗 2개를 심어 주세요</button></div>
   </section>
   <footer id="save-status">시간 제한 없이 · 이 브라우저에 자동 저장</footer>
   <div id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
@@ -38,5 +39,5 @@
 <dialog id="sheet" aria-labelledby="sheet-title"><div class="sheet-heading"><div><p id="sheet-eyebrow" class="eyebrow"></p><h2 id="sheet-title"></h2></div><button id="close-sheet" class="icon-button" aria-label="닫기">×</button></div><div id="sheet-content"></div></dialog>
 <div class="orientation-notice" role="status"><div><span class="phone" aria-hidden="true">✿</span><p class="eyebrow">햇빛정원</p><h2>화면을 세워 주세요</h2><p>세로 화면에서 정원을 이어서 키울 수 있어요.</p></div></div>
 <audio id="garden-bgm" src="./assets/audio/beatwave-bgm.mp3" preload="none" loop playsinline hidden></audio>
-<script type="module" src="./experience-app.mjs?v=20261018-23"></script>
+<script type="module" src="./experience-app.mjs?v=20261020-24"></script>
 </body></html>

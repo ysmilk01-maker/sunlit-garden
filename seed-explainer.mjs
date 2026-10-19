@@ -1,8 +1,8 @@
-import * as core from './evolution-core.mjs?v=20261015-20';
+import * as core from './evolution-core.mjs?v=20261020-24';
 
 // Text describes the rules; all placement scores come from the selected engine.
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
-const versions = new Set([2, 3, 4, 5, 6]);
+const versions = new Set([2, 3, 4, 5, 6, 7]);
 const entriesFor = state => state?.version === 2 ? core.LEGACY_SEEDS
   : state?.version === 3 ? core.V8_SEEDS : core.SEEDS;
 const baseValues = Object.freeze({
