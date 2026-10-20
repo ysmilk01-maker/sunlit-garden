@@ -1,6 +1,6 @@
-import {evolve,evolvableTiles,evolutionChoices,harvestSnapshot,dayStartSnapshot} from './evolution-core.mjs?v=20261020-24';
+import {evolve,evolvableTiles,evolutionChoices,harvestSnapshot,dayStartSnapshot,GARDEN_DESIGNS} from './evolution-core.mjs?v=20261020-27';
 import {newRun as classicRun} from './campaign-core.mjs?v=20261013-9';
-import { SEEDS, newRun, stageFor, isStageId as validStageId, picksToday, plant, harvest, forecast, chooseUpgrade, sanitizeState, sanitizeCampaign } from './evolution-core.mjs?v=20261020-24';
+import { SEEDS, newRun, stageFor, isStageId as validStageId, picksToday, plant, harvest, forecast, chooseUpgrade, sanitizeState, sanitizeCampaign } from './evolution-core.mjs?v=20261020-27';
 import { newRun as evolutionV5Run } from './evolution-legacy-v5.mjs?v=20261015-20';
 import { newRun as legacyRun } from './campaign-legacy-v7.mjs?v=20261013-9';
 import { newRun as previousRun } from './campaign-legacy-v8.mjs?v=20261013-9';
@@ -32,7 +32,7 @@ const WEATHER_MISSIONS = {
 // Reconstruct a day's first offer through public campaign actions. This avoids copying
 // its private RNG and keeps the mission stable after harvest clears undo history.
 function firstOffers(state, day) {
-  if (state.version === 7) return dayStartSnapshot(state, day)?.offers || [];
+  if (state.version === 7 || state.version === 8) return dayStartSnapshot(state, day)?.offers || [];
   if (day === state.day && state.history?.[0]?.offers) return state.history[0].offers;
   if (day === state.day && state.phase === 'plant' && state.placements === 0) return state.offers;
   const key = `${state.version}:${state.stageId}:${state.seed}:${day}`;
@@ -52,11 +52,11 @@ function firstOffers(state, day) {
 }
 
 export function missionFor(state, day = state?.day) {
-  if (state?.version === 7) state = harvestSnapshot(state, day) || state;
+  if (state?.version === 7 || state?.version === 8) state = harvestSnapshot(state, day) || state;
   const stage = stageFor(state);
-  if (!stage || ![2, 3, 4, 5, 6, 7].includes(state?.version) || !MISSION_DAYS.includes(day) || day > state.day || !Array.isArray(state.board) || state.board.length !== stage.cols * stage.rows) return null;
+  if (!stage || ![2, 3, 4, 5, 6, 7, 8].includes(state?.version) || !MISSION_DAYS.includes(day) || day > state.day || !Array.isArray(state.board) || state.board.length !== stage.cols * stage.rows) return null;
   const sameDayHistory = day === state.day ? state.history?.[0] : null;
-  const startBoard = (state.version === 7 ? dayStartSnapshot(state, day)?.board : null) || sameDayHistory?.board || state.board.map(tile => tile && tile.type !== 'well' && tile.plantedDay >= day ? null : tile);
+  const startBoard = (state.version === 7 || state.version === 8 ? dayStartSnapshot(state, day)?.board : null) || sameDayHistory?.board || state.board.map(tile => tile && tile.type !== 'well' && tile.plantedDay >= day ? null : tile);
   const todayBoard = state.board.map(tile => tile && tile.type !== 'well' && tile.plantedDay > day ? null : tile);
   const today = todayBoard.map((tile, index) => ({ tile, index })).filter(({ tile }) => tile && tile.type !== 'well' && tile.plantedDay === day && stage.pool.includes(tile.type));
   const mission = { id: `${stage.id}:${state.seed}:${day}`, day, reward: MISSION_REWARD, optional: true, required: 1, progress: 0, complete: false };
@@ -113,7 +113,22 @@ export function missionFor(state, day = state?.day) {
 }
 
 export function newProfile() {
-  return { version: 1, petals: 0, claimedMissions: [], claimedHarvests: [], clearedStages: [], stageStars: {}, selectedDecoration: null, options: { sound: true, haptics: true, music: true, musicVolume: 0.3 } };
+  return { version: 1, petals: 0, claimedMissions: [], claimedHarvests: [], clearedStages: [], stageStars: {}, designRecords: {}, selectedDecoration: null, options: { sound: true, haptics: true, music: true, musicVolume: 0.3 } };
+}
+
+// The collection is a local achievement summary, not currency or a server
+// leaderboard. Missing old fields migrate to an empty collection. A damaged new
+// entry is dropped independently so it can never reset already-earned petals.
+function sanitizeDesignRecords(input) {
+  const records = {};
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return records;
+  for (const [id, value] of Object.entries(input)) {
+    if (!own(GARDEN_DESIGNS, id) || !value || typeof value !== 'object' || Array.isArray(value)
+      || !Number.isInteger(value.bestTier) || value.bestTier < 0 || value.bestTier > 3
+      || !Number.isSafeInteger(value.bestScore) || value.bestScore < 1) continue;
+    records[id] = { bestTier: value.bestTier, bestScore: value.bestScore };
+  }
+  return records;
 }
 export function sanitizeProfile(input) {
   try {
@@ -144,7 +159,7 @@ export function sanitizeProfile(input) {
     // so an old or malformed audio preference never discards earned progress.
     const music = typeof input.options.music === 'boolean' ? input.options.music : true;
     const musicVolume = validMusicVolume(input.options.musicVolume) ? input.options.musicVolume : 0.3;
-    return { version: 1, petals: input.petals, claimedMissions: [...input.claimedMissions], claimedHarvests: [...input.claimedHarvests], clearedStages: [...input.clearedStages], stageStars, selectedDecoration: input.selectedDecoration, options: { sound: input.options.sound, haptics: input.options.haptics, music, musicVolume } };
+    return { version: 1, petals: input.petals, claimedMissions: [...input.claimedMissions], claimedHarvests: [...input.claimedHarvests], clearedStages: [...input.clearedStages], stageStars, designRecords: sanitizeDesignRecords(input.designRecords), selectedDecoration: input.selectedDecoration, options: { sound: input.options.sound, haptics: input.options.haptics, music, musicVolume } };
   } catch { return null; }
 }
 export function starsFor(state) {
@@ -168,8 +183,33 @@ export function claimClear(profile, state) {
   if (!clean || !valid || valid.phase !== 'over') return profile;
   const stars = starsFor(valid); if (!stars) return profile;
   const firstClear = !clean.clearedStages.includes(valid.stageId), previousStars = clean.stageStars[valid.stageId] || 0;
-  if (!firstClear && previousStars >= stars) return profile;
-  return { ...clean, petals: clean.petals + (firstClear ? CLEAR_REWARD : 0), clearedStages: firstClear ? [...clean.clearedStages, valid.stageId] : clean.clearedStages, stageStars: { ...clean.stageStars, [valid.stageId]: Math.max(previousStars, stars) } };
+  if (!firstClear && previousStars >= stars) return claimDesign(profile, valid);
+  return claimDesign({ ...clean, petals: clean.petals + (firstClear ? CLEAR_REWARD : 0), clearedStages: firstClear ? [...clean.clearedStages, valid.stageId] : clean.clearedStages, stageStars: { ...clean.stageStars, [valid.stageId]: Math.max(previousStars, stars) } }, valid);
+}
+
+export function claimDesign(profile, state) {
+  // Preserve legacy call/identity behavior and never infer a design for an old run.
+  if (state?.version !== 8 || state.phase !== 'over') return profile;
+  const clean = sanitizeProfile(profile), valid = sanitizeState(state);
+  if (!clean || !valid || !starsFor(valid) || !own(GARDEN_DESIGNS, valid.designId)) return profile;
+  const receipt = valid.lastHarvest?.designProgress;
+  if (!receipt || receipt.id !== valid.designId || !Number.isInteger(receipt.tier) || receipt.tier < 0 || receipt.tier > 3) return profile;
+  const previous = clean.designRecords[valid.designId];
+  const bestTier = Math.max(previous?.bestTier || 0, receipt.tier);
+  const bestScore = Math.max(previous?.bestScore || 0, valid.score);
+  // Maxima are intentionally independent: a high-score run need not be the run
+  // that reached the best design tier. Replaying/reloading adds no counters/payments.
+  if (previous?.bestTier === bestTier && previous.bestScore === bestScore) return profile;
+  return { ...clean, designRecords: { ...clean.designRecords, [valid.designId]: { bestTier, bestScore } } };
+}
+
+export function designCollection(profile) {
+  const valid = sanitizeProfile(profile) || newProfile();
+  return Object.values(GARDEN_DESIGNS).map(design => {
+    const record = valid.designRecords[design.id];
+    return { id: design.id, name: design.name, title: design.title, icon: design.icon, condition: design.condition,
+      bestTier: record?.bestTier || 0, bestScore: record?.bestScore || 0, collected: (record?.bestTier || 0) > 0 };
+  });
 }
 export function reconcileCampaign(profile, campaign) {
   const clean = sanitizeProfile(profile), progress = sanitizeCampaign(campaign);

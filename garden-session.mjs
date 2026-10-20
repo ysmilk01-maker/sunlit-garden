@@ -6,7 +6,7 @@ export function homeActionFor(state, target) {
       title: cleared ? '다음 정원 가꾸기' : '다시 도전하기',
       detail: cleared ? `${state.stageId + 1}단계 · 새로운 정원` : `${state.stageId}단계 · 다른 배치로 한 번 더`};
   }
-  const active = state.day > 1 || state.placements > 0 || state.phase !== 'plant';
+  const active = state.day > 1 || state.placements > 0 || state.phase !== 'plant' || (state.version === 8 && !!state.designId);
   return {kind: active ? 'resume' : 'start', stageId: state.stageId,
     title: active ? '정원 이어가기' : '나의 정원 열기',
     detail: `${state.stageId}단계 · ${active ? state.day + '일째부터' : '일곱 날의 시작'}`};

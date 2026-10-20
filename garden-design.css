@@ -1,0 +1,244 @@
+/* v27 · One garden plan from the first seed to the finished medal.
+ * Presentation only. Conditions, thresholds and rewards come from the engine.
+ * The unselected draft gives its repeated instruction space to the plan strip;
+ * selected seed traits and existing 44px controls retain their full space.
+ */
+.design-card, .design-status, .design-result, .design-collection-card {
+  --design-ink: #644719;
+  --design-accent: #b47b22;
+  --design-paper: #fff1ca;
+  --design-edge: #dbb969;
+  --design-soft: #f1dda7;
+}
+:is(.design-card,.design-status,.design-result,.design-collection-card)[data-design="moon"] {
+  --design-ink: #51436f;
+  --design-accent: #786098;
+  --design-paper: #f0e7fa;
+  --design-edge: #b9a2d3;
+  --design-soft: #ded0ec;
+}
+:is(.design-card,.design-status,.design-result,.design-collection-card)[data-design="rainbow"] {
+  --design-ink: #27594b;
+  --design-accent: #3b806b;
+  --design-paper: #e9f3dd;
+  --design-edge: #a4c7a0;
+  --design-soft: #d1e6c2;
+}
+.design-intro {
+  margin: 0 0 12px;
+  color: var(--garden-ink-soft,#5f6c50);
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+.design-chooser { display: grid; gap: 10px; }
+.design-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 88px minmax(0,1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 120px;
+  padding: 10px 12px 10px 7px;
+  border: 1px solid var(--design-edge);
+  border-radius: 16px 16px 16px 6px;
+  background: linear-gradient(115deg,#fffdf7ad,transparent 70%),var(--design-paper);
+  color: var(--design-ink);
+  box-shadow: inset 0 1px #fffef5,0 3px 0 #988b5e24;
+  text-align: start;
+  isolation: isolate;
+}
+.design-card[aria-pressed="true"] {
+  border-color: var(--design-accent);
+  outline: 2px solid var(--design-accent);
+  outline-offset: 1px;
+  box-shadow: inset 0 0 0 1px #fffdf6,0 3px 0 #6b764b30;
+}
+.design-card[aria-pressed="true"]::after {
+  content: "✓";
+  position: absolute;
+  inset-block-start: 5px;
+  inset-inline-end: 6px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--design-accent);
+  color: #fffdf2;
+  font-size: 11px;
+  pointer-events: none;
+}
+.design-card-art { position: relative; width: 88px; height: 88px; isolation: isolate; pointer-events: none; }
+.design-card-art::before {
+  content: "";
+  position: absolute;
+  inset: 15% 0 6%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(ellipse,#fffefa 5%,var(--design-soft) 65%,transparent 67%);
+}
+.design-card-art>span { position: absolute; inset: auto auto 0 0; display: block; width: 55px; height: 68px; }
+.design-card-art>span:nth-child(2) { inset: 0 auto auto 18px; width: 64px; height: 80px; z-index: 2; }
+.design-card-art>span:nth-child(3) { inset: auto 0 0 auto; width: 48px; height: 57px; z-index: 3; }
+.design-card-art>span>.plant-art { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
+.design-card-copy { display: grid; gap: 4px; min-width: 0; }
+.design-card-title { display: block; padding-inline-end: 12px; font-size: 16px; line-height: 1.3; letter-spacing: -.35px; }
+.design-card-rule { display: block; font-size: 12px; line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
+.design-card-bonus { display: block; font-size: 12px; line-height: 1.4; font-weight: 800; font-variant-numeric: tabular-nums; }
+.design-card-seeds { display: block; color: var(--garden-ink-soft,#5f6c50); font-size: 10px; line-height: 1.4; word-break: keep-all; }
+.design-choice-note { margin: 11px 0 0; font-size: 10px; line-height: 1.45; color: #64714f; text-align: center; font-variant-numeric: tabular-nums; }
+#confirm-design { width: 100%; min-height: 44px; margin-block-start: 12px; }
+#sheet[data-mode="design-choice"] .sheet-heading { margin-block-end: 10px; }
+#sheet[data-mode="design-choice"] .sheet-heading h2 { font-size: 23px; }
+#sheet[data-mode="design-choice"] .sheet-actions { margin-block-start: 0; }
+
+/* Keep the actual condition readable. Do not reduce it to another toolbar icon. */
+.app.designed-run .game { grid-template-rows: 123px minmax(0,1fr) 222px 50px; }
+.app.designed-run .game:not(.has-seed-advice) { grid-template-rows: 123px minmax(0,1fr) 134px 50px; }
+.app.designed-run .game:not(.has-seed-advice) .draft { grid-template-rows: 20px 78px 28px; }
+.app.designed-run .game:not(.has-seed-advice) .tip { min-height: 0; padding: 2px 6px; border: 0; font-size: 10px; line-height: 1.35; }
+.app.designed-run #mission-button { display: none; }
+.app.designed-run #mission-button::before { content: none; }
+/* While a seed is selected, its inline explanation carries the plan relevance.
+   Give the plan strip's space back to the board, keeping direct planting usable. */
+.app.designed-run .game.has-seed-advice { grid-template-rows:79px minmax(0,1fr) 222px 50px; }
+.app.designed-run .game.has-seed-advice #design-status { display:none; }
+#design-status.design-status {
+  display: grid;
+  grid-template-columns: 28px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin-block-start: 5px;
+  padding: 4px 8px;
+  border: 1px solid var(--design-edge);
+  border-radius: 8px;
+  background: linear-gradient(110deg,#fffaf04d,transparent),var(--design-paper);
+  color: var(--design-ink);
+  box-shadow: inset 0 1px #fffdf799,0 2px 0 #062f283d;
+  text-align: start;
+}
+.design-status-icon { display: grid; place-items: center; font-size: 21px; width: 28px; height: 28px; }
+.design-status-icon :is(svg,.plant-art) { width: 28px; height: 28px; }
+.design-status-copy { display: grid; gap: 1px; min-width: 0; }
+.design-status-copy strong { font-size: 11px; line-height: 1.35; }
+.design-status-copy em { margin-inline-start: 4px; font-style: normal; white-space: nowrap; }
+.design-status-copy small { font-size: 10px; line-height: 1.35; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.design-status-count { padding: 4px 6px; border-radius: 5px; background: #fffdf7a6; font-size: 12px; line-height: 1.25; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.design-status-count small { display: block; color: inherit; font-size: 8px; text-align: center; }
+.design-pip { display: inline-block; width: 6px; height: 6px; margin-inline: 2px; border: 1px solid currentColor; border-radius: 50%; }
+.design-pip[data-active="true"] { background: currentColor; }
+.design-seed-fit { display: inline; padding: 1px 4px; border-radius: 3px; background: #f0d17a21; color: #ffe2a0; font-size: inherit; font-weight: 750; }
+.design-seed-fit::after { content: " · "; }
+.zoom-seed-inline .design-seed-fit { color: #476331; background: #cbdca66b; }
+.seed-build-tag { display: block; max-width: 100%; overflow: hidden; color: #31553c; font-size: 10px; line-height: 1.3; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+
+/* The same plan emblem continues into its explanation and completed garden. */
+.design-milestones { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-block: 13px; }
+.design-milestones>div { display: grid; align-content: center; gap: 4px; min-height: 76px; padding: 9px 4px; border: 1px solid #d5d7b8; border-radius: 9px; background: #eeecd8; color: #53654b; text-align: center; font-size: 11px; line-height: 1.4; }
+.design-milestones>div[data-active="true"] { border-color: #69905c; background: #dfeccf; color: #315a36; box-shadow: inset 0 0 0 1px #fff7d3; }
+.design-milestones strong { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+.design-milestones b { font-size: 11px; font-variant-numeric: tabular-nums; }
+.design-milestones small { font-size: 10px; line-height: 1.35; }
+.design-detail-seeds { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 7px; margin-block: 10px; color: #4d6744; font-size: 11px; line-height: 1.4; }
+.design-detail-seeds>span { display: inline-flex; align-items: center; gap: 4px; }
+.design-detail-seeds .plant-art { width: 32px; height: 32px; }
+.design-side-mission { margin-block-start: 10px; padding: 8px 9px; border-radius: 7px; background: #e7e9d4; color: #5f704d; font-size: 10px; line-height: 1.5; word-break: keep-all; }
+.design-result { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; align-items: center; gap: 9px; padding: 9px; margin-block: 9px; border: 1px solid var(--design-edge); border-radius: 10px; background: var(--design-paper); color: var(--design-ink); }
+.design-medal { display: grid; place-items: center; width: 42px; height: 46px; border: 1px solid var(--design-edge); border-radius: 50% 50% 42% 42%; background: radial-gradient(ellipse at 36% 24%,#fffdf1,var(--design-soft)); box-shadow: inset 0 0 0 3px #fffaf366; font-size: 25px; }
+.design-medal :is(svg,.plant-art) { width: 32px; height: 32px; }
+.design-result-copy { min-width: 0; }
+.design-result-copy strong { display: block; font-size: 12px; line-height: 1.4; }
+.design-result-copy :is(small,span,p) { display: block; font-size: 10px; line-height: 1.4; margin-block-start: 2px; }
+.design-result-bonus { font-size: 18px; line-height: 1.2; font-weight: 850; font-variant-numeric: tabular-nums; text-align: end; }
+.design-result-bonus small { display: block; font-size: 9px; font-weight: 600; line-height: 1.4; }
+.design-collection { display: grid; gap: 9px; }
+.design-collection-card { display: grid; grid-template-columns: 74px minmax(0,1fr); align-items: center; gap: 9px; min-height: 91px; width: 100%; padding: 11px; border: 1px solid var(--design-edge); border-radius: 12px; background: var(--design-paper); color: var(--design-ink); text-align: start; }
+.design-collection-card .design-card-art { width: 74px; height: 72px; }
+.design-collection-card .design-card-art>span { width: 45px; height: 55px; }
+.design-collection-card .design-card-art>span:nth-child(2) { width: 55px; height: 70px; inset-inline-start: 12px; }
+.design-collection-card .design-card-art>span:nth-child(3) { width: 40px; height: 48px; }
+.design-collection-card strong { display: block; font-size: 13px; line-height: 1.35; }
+.design-collection-card :is(small,p) { display: block; font-size: 10px; line-height: 1.45; margin-block-start: 3px; }
+.design-collection-card[data-earned="false"] { border-style: dashed; background: #f0eddf; color: #626b56; }
+.design-collection-card[data-earned="false"] :is(.design-medal,.design-card-art) { filter: grayscale(.9); opacity: .65; }
+.design-collection-progress { margin-block: 0 12px; font-size: 11px; line-height: 1.5; color: #64734e; font-variant-numeric: tabular-nums; }
+#sheet :is(.design-card,.design-collection-card):focus-visible,#design-status:focus-visible { outline: 3px solid #24695b; outline-offset: 2px; }
+
+@media(max-height:740px) and (orientation:portrait) {
+  .app.designed-run .game { grid-template-rows: 112px minmax(0,1fr) 187px 46px; }
+  .app.designed-run .game.has-seed-advice { grid-template-rows:68px minmax(0,1fr) 187px 46px; }
+  .app.designed-run .game:not(.has-seed-advice) { grid-template-rows: 112px minmax(0,1fr) 120px 46px; }
+  .app.designed-run .game:not(.has-seed-advice) .draft { grid-template-rows: 18px 68px 30px; }
+  .design-chooser { gap: 8px; }
+  .design-card { grid-template-columns: 74px minmax(0,1fr); min-height: 103px; padding: 8px; gap: 9px; }
+  .design-card-art { width: 74px; height: 78px; }
+  .design-card-art>span { width: 46px; height: 58px; }
+  .design-card-art>span:nth-child(2) { width: 55px; height: 72px; inset-inline-start: 12px; }
+  .design-card-art>span:nth-child(3) { width: 42px; height: 50px; }
+  .design-card-title { font-size: 14px; }
+  .design-card-copy { gap: 3px; }
+  .design-card-rule,.design-card-bonus { font-size: 11px; }
+  .design-choice-note { margin-block-start: 8px; }
+  .design-result { padding: 7px 8px; margin-block: 7px; }
+  .design-collection-card { min-height: 84px; }
+}
+@media(max-height:590px) and (orientation:portrait) {
+  .app.designed-run .game { grid-template-rows: 114px minmax(0,1fr) 172px 44px; }
+  .app.designed-run .game.has-seed-advice { grid-template-rows:70px minmax(0,1fr) 172px 44px; }
+  .app.designed-run .game:not(.has-seed-advice) { grid-template-rows: 114px minmax(0,1fr) 110px 44px; }
+  .app.designed-run .game:not(.has-seed-advice) .draft { grid-template-rows: 18px 60px 28px; }
+  #design-status.design-status { gap: 5px; padding: 3px 6px; margin-block-start: 4px; grid-template-columns: 24px minmax(0,1fr) auto; }
+  .design-status-icon,.design-status-icon :is(svg,.plant-art) { width: 24px; height: 24px; font-size: 19px; }
+  .design-status-copy strong { font-size: 10px; }
+  .design-status-copy small { font-size: 9px; }
+  .design-status-count { font-size: 11px; padding: 3px 5px; }
+  .seed-build-tag { font-size: 9px; }
+  #sheet[data-mode="design-choice"] { padding: 13px; }
+  #sheet[data-mode="design-choice"] .sheet-heading { margin-block-end: 7px; }
+  #sheet[data-mode="design-choice"] .sheet-heading h2 { font-size: 20px; }
+  .design-intro { font-size: 11px; margin-block-end: 8px; }
+  .design-chooser { gap: 7px; }
+  .design-card { grid-template-columns: 58px minmax(0,1fr); min-height: 88px; padding: 7px; gap: 8px; border-radius: 11px 11px 11px 5px; }
+  .design-card-art { width: 58px; height: 66px; }
+  .design-card-art>span { width: 36px; height: 48px; }
+  .design-card-art>span:nth-child(2) { width: 44px; height: 60px; inset-inline-start: 8px; }
+  .design-card-art>span:nth-child(3) { width: 34px; height: 42px; }
+  .design-card-copy { gap: 2px; }
+  .design-card-title { font-size: 13px; }
+  .design-card-rule,.design-card-bonus { font-size: 10px; line-height: 1.35; }
+  .design-card-seeds { font-size: 9px; line-height: 1.35; }
+  .design-choice-note { margin-block-start: 7px; font-size: 9px; }
+  #confirm-design { margin-block-start: 8px; }
+  .design-milestones { gap: 5px; margin-block: 9px; }
+  .design-milestones>div { min-height: 65px; padding: 6px 3px; font-size: 10px; }
+  .design-milestones strong { font-size: 15px; }
+  .design-milestones b { font-size: 10px; }
+  #sheet[data-mode="design-detail"] { padding: 13px; }
+  #sheet[data-mode="design-detail"] .sheet-heading { margin-block-end: 7px; }
+  #sheet[data-mode="design-detail"] .design-detail-seeds { margin-block: 6px; }
+  #sheet[data-mode="design-detail"] .sheet-note { margin-block-start: 8px; padding-block-start: 7px; font-size: 9px; line-height: 1.45; }
+  #sheet[data-mode="design-detail"] .design-side-mission { margin-block-start: 7px; padding: 6px 8px; font-size: 9px; }
+  #sheet[data-mode="design-detail"] .sheet-actions { margin-block-start: 9px; }
+  .design-result { grid-template-columns: 36px minmax(0,1fr) auto; gap: 6px; margin-block: 5px; padding: 6px; }
+  .design-medal { width: 35px; height: 39px; font-size: 21px; }
+  .design-medal :is(svg,.plant-art) { width: 27px; height: 27px; }
+  .design-result-copy strong { font-size: 11px; }
+  .design-result-copy :is(small,span,p) { font-size: 9px; }
+  .design-result-bonus { font-size: 16px; }
+  .design-collection { gap: 7px; }
+  .design-collection-card { grid-template-columns: 58px minmax(0,1fr); min-height: 76px; padding: 8px; gap: 7px; }
+  .design-collection-card .design-card-art { width: 58px; height: 62px; }
+  .design-collection-card .design-card-art>span { width: 35px; height: 46px; }
+  .design-collection-card .design-card-art>span:nth-child(2) { width: 44px; height: 59px; inset-inline-start: 8px; }
+  .design-collection-card .design-card-art>span:nth-child(3) { width: 32px; height: 40px; }
+  .design-collection-card strong { font-size: 12px; }
+  .design-collection-progress { margin-block-end: 8px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .design-card,.design-status,.design-collection-card { transition: none; }
+}

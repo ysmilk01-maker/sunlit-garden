@@ -1,4 +1,4 @@
-import * as core from './evolution-core.mjs?v=20261020-24';
+import * as core from './evolution-core.mjs?v=20261020-27';
 import * as classic from './campaign-core.mjs';
 
 // Advice is a projection of the selected save's rules, never a second score engine.
@@ -13,7 +13,7 @@ const entriesFor = state => state.version === 2 ? { seeds: core.LEGACY_SEEDS, up
 const isPlant = (state, tile) => !!tile && own(entriesFor(state).seeds, tile.type) && tile.type !== 'hive';
 const isResting = (state, tile) => tile?.evolution?.id === 'solar' && state.day > tile.evolution.day
   && (state.day - tile.evolution.day) % 2 === 1;
-const validState = state => !!state && [2, 3, 4, 5, 6, 7].includes(state.version) && Array.isArray(state.board)
+const validState = state => !!state && [2, 3, 4, 5, 6, 7, 8].includes(state.version) && Array.isArray(state.board)
   && state.board.length === state.cols * state.rows && Number.isInteger(state.day) && state.day >= 1 && state.day <= core.RUN_DAYS;
 const dayLabel = day => `${day}일차 수확`;
 

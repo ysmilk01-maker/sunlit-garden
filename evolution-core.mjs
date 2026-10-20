@@ -1,8 +1,10 @@
 import * as base from './campaign-core.mjs';
 import * as legacy from './evolution-legacy-v5.mjs';
+import { GARDEN_DESIGNS, isGardenDesign, designStarterOffers, designProgress } from './garden-designs.mjs';
 
 // Versions 2–5 retain their original rules; only new v6 runs gain a third tier.
 export * from './campaign-core.mjs';
+export { GARDEN_DESIGNS, designProgress } from './garden-designs.mjs';
 
 export const EVOLUTION_DAYS = Object.freeze([1, 3, 5]);
 export const EVOLUTIONS = Object.freeze({
@@ -42,7 +44,7 @@ const TYPES = new Set(Object.values(EVOLUTIONS).map(choice => choice.type));
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const copy = value => JSON.parse(JSON.stringify(value));
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-const isV6 = state => state?.version === 6 || state?.version === 7;
+const isV6 = state => state?.version === 6 || state?.version === 7 || state?.version === 8;
 const asBase = state => ({ ...state, version: 4 });
 const isPlant = tile => !!tile && own(base.SEEDS, tile.type) && tile.type !== 'hive';
 const near = (index, cols, rows) => [index - cols, index + cols, ...(index % cols ? [index - 1] : []), ...(index % cols < cols - 1 ? [index + 1] : [])].filter(i => i >= 0 && i < cols * rows);
@@ -72,8 +74,21 @@ export function newStrategicRun(seed, stageId = 1) {
   return { ...newRun(seed, stageId), version: 7, transplantsUsed: 0 };
 }
 
+export function newDesignedRun(seed, stageId = 1, designId = null) {
+  const state = { ...newStrategicRun(seed, stageId), version: 8, designId: null };
+  return isGardenDesign(designId) ? chooseDesign(state, designId) : state;
+}
+
+export function chooseDesign(state, id) {
+  if (state?.version !== 8 || state.designId !== null || !isGardenDesign(id)
+    || state.phase !== 'plant' || state.day !== 1 || state.placements !== 0
+    || state.score !== 0 || state.ledger?.length !== 0 || state.harvests?.length !== 0) return state;
+  return log(state, { ...state, designId: id, offers: designStarterOffers(state.seed, id) }, { kind: 'design', id });
+}
+
 export function transplantsRemaining(state) {
-  return state?.version === 7 && state.phase === 'plant' && state.transplantsUsed === 0 ? 1 : 0;
+  return [7, 8].includes(state?.version) && state.phase === 'plant' && state.transplantsUsed === 0
+    && (state.version !== 8 || isGardenDesign(state.designId)) ? 1 : 0;
 }
 
 export function transplant(state, from, to) {
@@ -87,12 +102,13 @@ export function transplant(state, from, to) {
 
 export function undoAvailable(state) {
   if (!state || state.phase !== 'plant') return false;
-  if (state.version === 7) return ['plant', 'transplant'].includes(state.ledger?.at(-1)?.kind);
+  if ([7, 8].includes(state.version)) return ['plant', 'transplant'].includes(state.ledger?.at(-1)?.kind);
   if (state.version === 6) return state.ledger?.at(-1)?.kind === 'plant' && state.history?.length > 0;
   return state.history?.length > 0;
 }
 
 export function plant(state, index, type) {
+  if (state?.version === 8 && !isGardenDesign(state.designId)) return state;
   if (!isV6(state)) return legacy.plant(state, index, type);
   const source = asBase(state), next = base.plant(source, index, type);
   return next === source ? state : log(state, next, { kind: 'plant', index, type });
@@ -100,7 +116,7 @@ export function plant(state, index, type) {
 
 export function undo(state) {
   if (!isV6(state)) return legacy.undo(state);
-  if (state.version === 7) {
+  if ([7, 8].includes(state.version)) {
     if (!undoAvailable(state)) return state;
     const replay = replayLedger(state, state.ledger.slice(0, -1));
     return replay?.phase === 'plant' && replay.day === state.day ? replay : state;
@@ -204,14 +220,23 @@ export function forecast(state) {
       else if (flowers.length === 1) extra(index, flowers[0], id, master ? 3 : 2);
     }
   }
+  const design = designProgress(state);
+  for (const bonus of design?.bonuses ?? []) {
+    const tile = byIndex.get(bonus.index);
+    if (!tile) continue;
+    tile.value += bonus.value;
+    tile.reasons.push({ label: `정원 설계 · ${design.name}`, value: bonus.value, combo: true });
+  }
   return {
     total: tiles.reduce((sum, tile) => sum + tile.value, 0), tiles,
     comboCount: tiles.filter(tile => tile.reasons.some(reason => reason.combo)).length,
     evolutionEffects,
+    ...(state.version === 8 ? { designProgress: design } : {}),
   };
 }
 
 export function harvest(state) {
+  if (state?.version === 8 && !isGardenDesign(state.designId)) return state;
   if (!isV6(state)) return legacy.harvest(state);
   const source = asBase(state), next = base.harvest(source);
   if (next === source) return state;
@@ -268,6 +293,7 @@ function actionMatches(action, keys) {
 }
 
 function replayAction(state, action) {
+  if (action?.kind === 'design' && actionMatches(action, ['kind', 'id'])) return chooseDesign(state, action.id);
   if (action?.kind === 'plant' && actionMatches(action, ['kind', 'index', 'type'])) return plant(state, action.index, action.type);
   if (action?.kind === 'harvest' && actionMatches(action, ['kind'])) return harvest(state);
   if (action?.kind === 'upgrade' && actionMatches(action, ['kind', 'id'])) return chooseUpgrade(state, action.id);
@@ -279,9 +305,10 @@ function replayAction(state, action) {
 
 function replayLedger(input, ledger = input?.ledger, snapshot = null) {
   if (!isV6(input) || !base.isStageId(input.stageId) || !Number.isSafeInteger(input.seed) || input.seed < 0
-    || !Array.isArray(ledger) || ledger.length > 64) return null;
-  let replay = input.version === 7 ? newStrategicRun(input.seed, input.stageId) : newRun(input.seed, input.stageId);
-  if (snapshot?.kind === 'start' && replay.day === snapshot.day) return replay;
+    || !Array.isArray(ledger) || ledger.length > (input.version === 8 ? 65 : 64)) return null;
+  let replay = input.version === 8 ? newDesignedRun(input.seed, input.stageId)
+    : input.version === 7 ? newStrategicRun(input.seed, input.stageId) : newRun(input.seed, input.stageId);
+  if (snapshot?.kind === 'start' && replay.day === snapshot.day && (input.version !== 8 || !ledger.length)) return replay;
   for (const action of ledger) {
     const day = replay.day, next = replayAction(replay, action);
     if (next === replay) return null;
@@ -295,12 +322,12 @@ function replayLedger(input, ledger = input?.ledger, snapshot = null) {
 // Mission history must use positions at that harvest, even if a plant is moved
 // later. These bounded ledger snapshots never infer old positions from today's board.
 export function harvestSnapshot(state, day) {
-  if (state?.version !== 7 || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
+  if (![7, 8].includes(state?.version) || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
   return replayLedger(state, state.ledger, { kind: 'harvest', day });
 }
 
 export function dayStartSnapshot(state, day) {
-  if (state?.version !== 7 || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
+  if (![7, 8].includes(state?.version) || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
   return replayLedger(state, state.ledger, { kind: 'start', day });
 }
 
@@ -308,7 +335,7 @@ export function sanitizeState(input) {
   if (!isV6(input)) return legacy.sanitizeState(input);
   try {
     if (!base.isStageId(input.stageId) || !Number.isSafeInteger(input.seed) || input.seed < 0
-      || !Array.isArray(input.ledger) || input.ledger.length > 64) return null;
+      || !Array.isArray(input.ledger) || input.ledger.length > (input.version === 8 ? 65 : 64)) return null;
     const replay = replayLedger(input);
     // Replaying rejects forged tile abilities, double harvests, stale undo boards,
     // altered offers, receipts, counters and future/duplicate evolution choices.
@@ -350,13 +377,13 @@ export function sanitizeCampaign(input) {
       if (!base.isStageId(id) || String(id) !== key || !value || !Number.isSafeInteger(value.best) || value.best < 0
         || typeof value.cleared !== 'boolean' || !Number.isSafeInteger(value.attempts) || value.attempts < 1
         || !Array.isArray(value.runIds) || value.runIds.length !== value.attempts || new Set(value.runIds).size !== value.runIds.length) return null;
-      if (value.runIds.some(runId => typeof runId !== 'string' || !new RegExp(`^${id}:(0|[1-9][0-9]*)(:v[34567])?$`).test(runId)
+      if (value.runIds.some(runId => typeof runId !== 'string' || !new RegExp(`^${id}:(0|[1-9][0-9]*)(:v[34567]|:v8:(pollinator|moon|rainbow))?$`).test(runId)
         || !Number.isSafeInteger(Number(runId.split(':')[1]))) || !value.runIds.includes(value.lastRunId)) return null;
       const oldTarget = id <= 100 ? base.stageFor({ version: 2, stageId: id }).target : null;
       const v8Target = id <= 100 ? base.stageFor({ version: 3, stageId: id }).target : null;
       const hasLegacyRuns = value.runIds.some(runId => runId.split(':').length === 2);
       const hasV8Runs = value.runIds.some(runId => runId.endsWith(':v3'));
-      const hasNewRuns = value.runIds.some(runId => /:v[4567]$/.test(runId));
+      const hasNewRuns = value.runIds.some(runId => /:v[4567]$|:v8:(pollinator|moon|rainbow)$/.test(runId));
       if (id > 100 && (hasLegacyRuns || hasV8Runs)) return null;
       let targetAtClear = value.targetAtClear, earnedStars = value.earnedStars;
       if (!own(value, 'targetAtClear') && !own(value, 'earnedStars')) {
@@ -397,7 +424,7 @@ export function recordResult(campaign, state) {
   const clean = sanitizeState(state), progress = sanitizeCampaign(campaign);
   if (!clean || clean.phase !== 'over' || !progress || !base.isStageId(clean.stageId) || clean.stageId > progress.unlocked) return campaign;
   const stage = base.stageFor(clean), previous = progress.stages[stage.id];
-  const runId = `${stage.id}:${clean.seed}${clean.version >= 3 ? `:v${clean.version}` : ''}`;
+  const runId = `${stage.id}:${clean.seed}${clean.version >= 3 ? `:v${clean.version}` : ''}${clean.version === 8 ? `:${clean.designId}` : ''}`;
   const runIds = previous?.runIds.includes(runId) ? [...previous.runIds] : [...(previous?.runIds || []), runId];
   const best = Math.max(previous?.best || 0, clean.score), cleared = !!previous?.cleared || clean.score >= stage.target;
   const targetAtClear = previous?.targetAtClear ?? (clean.score >= stage.target ? stage.target : null);
