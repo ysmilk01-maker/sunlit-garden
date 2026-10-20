@@ -103,7 +103,7 @@ export function renderGardenSound(kind, options = {}, sampleRate = 48000) {
 }
 
 export function createGardenAudio({ getContext, isEnabled = () => true, isHidden = () => false, getVolume = () => DEFAULT_VOLUME } = {}) {
-  const voices = new Set(), buffers = new WeakMap(), lastPlayed = new Map();
+  const voices = new Set(), buffers = new WeakMap(), prepared = new WeakSet(), lastPlayed = new Map();
   const permitted = () => { try { return Boolean(isEnabled()) && !isHidden(); } catch { return false; } };
   const volume = () => { try { const value = getVolume(); return Number.isFinite(value) ? clamp(value, 0, 1) : 0; } catch { return 0; } };
   function finish(voice, cancel = false) {
@@ -118,7 +118,10 @@ export function createGardenAudio({ getContext, isEnabled = () => true, isHidden
   function stop() { for (const voice of [...voices]) finish(voice, true); lastPlayed.clear(); }
   function bufferFor(context, kind, options) {
     let cache = buffers.get(context); if (!cache) { cache = new Map(); buffers.set(context, cache); }
-    const key = `${kind}:${options.type}:${options.step}`;
+    // Only select/plant depend on species; only bloom depends on its step.
+    // Canonical keys keep all playable variants in 59 entries, below the cap.
+    const key = kind === 'select' || kind === 'plant' ? `${kind}:${options.type}`
+      : kind === 'bloom' ? `${kind}:${options.step}` : kind;
     if (cache.has(key)) return cache.get(key);
     const rendered = renderGardenSound(kind, options, context.sampleRate);
     if (!rendered) throw new Error('Unsupported audio sample rate');
@@ -126,6 +129,26 @@ export function createGardenAudio({ getContext, isEnabled = () => true, isHidden
     buffer.getChannelData(0).set(rendered.samples);
     if (cache.size >= 128) cache.delete(cache.keys().next().value);
     cache.set(key, buffer); return buffer;
+  }
+  function prepare() {
+    if (!permitted() || !volume()) return false;
+    try {
+      const context = getContext?.();
+      if (!context || context.state === 'closed') return false;
+      if (prepared.has(context)) return true;
+      for (const type of Object.keys(TYPES)) {
+        bufferFor(context, 'select', {type, step: 0});
+        bufferFor(context, 'plant', {type, step: 0});
+      }
+      for (let step = 0; step < 10; step++) bufferFor(context, 'bloom', {type: 'sunflower', step});
+      for (const kind of Object.keys(GARDEN_SOUND_DURATIONS)) {
+        if (kind !== 'select' && kind !== 'plant' && kind !== 'bloom') {
+          bufferFor(context, kind, {type: 'sunflower', step: 0});
+        }
+      }
+      prepared.add(context);
+      return true;
+    } catch { return false; }
   }
   function play(kind, options = {}) {
     const level = volume();
@@ -156,5 +179,5 @@ export function createGardenAudio({ getContext, isEnabled = () => true, isHidden
       return true; // Scheduled, not proof of output through the user's speakers.
     } catch { if (voice) finish(voice, true); return false; }
   }
-  return { play, stop };
+  return { play, stop, prepare };
 }

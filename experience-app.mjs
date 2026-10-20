@@ -1,7 +1,7 @@
 import {SEEDS,UPGRADES,WEATHER,STAGES,RUN_DAYS,newStrategicRun as newRun,transplant,transplantsRemaining,undoAvailable,stageFor,picksToday,plant,undo,forecast,harvest,chooseUpgrade,rerollUpgrades,rerollsRemaining,loadRun,saveRun,loadCampaign,saveCampaign,recordResult,canPlay} from './evolution-core.mjs?v=20261020-24';
 import {EVOLUTIONS,evolutionTier,evolutionDetails,evolutionChoices,evolvableTiles,evolve as chooseEvolution,previewEvolution} from './evolution-core.mjs?v=20261020-24';
 import {plantArt,evolutionArt,installSpriteFallbacks} from './garden-sprites.mjs?v=20261015-20';
-import {createGardenAudio} from './garden-audio.mjs?v=20261013-12';
+import {createGardenAudio} from './garden-audio.mjs?v=20261020-26';
 import {seedAdvice,upgradeAdvice,evolutionAdvice} from './garden-strategy.mjs?v=20261020-24';
 import {createGardenFeedback} from './garden-feedback.mjs?v=20261020-24';
 import {seedFacts,explainSeedPlacement} from './seed-explainer.mjs?v=20261020-24';
@@ -9,7 +9,7 @@ import {seedInlineCopy,upgradeEffectCopy} from './choice-copy.mjs?v=20261020-24'
 import {createSeedDiscovery} from './seed-discovery.mjs?v=20261014-19';
 import {goalProgress,bestPreviewSlots,nextStarGoal} from './garden-journey.mjs?v=20261020-24';
 import {DECORATIONS,loadProfile,saveProfile,missionFor,claimHarvest,claimClear,reconcileCampaign,starsFor,summaryFor,selectDecoration,setOptions} from './garden-features.mjs?v=20261020-24';
-import {createGardenMusic} from './garden-music.mjs?v=20261013-7';
+import {createGardenMusic} from './garden-music.mjs?v=20261020-26';
 import * as LEGACY from './campaign-legacy-v7.mjs';
 import * as LEGACY8 from './campaign-legacy-v8.mjs';
 import {createWeatherScene} from './weather-scene.mjs?v=20261015-20';
@@ -39,7 +39,7 @@ let state=loaded.state&&canPlay(campaign,loaded.state.stageId)?loaded.state:newR
 let adviceState=null,adviceCache=new Map(),explanationState=null,explanationCache=new Map();
 let selected=null,busy=false,sound=profile.options.sound,audioContext=null,sheetMode='',rotatedSheet=false,helpPage=0,zoomMode=false,zoomZone=0,stagePage=Math.floor((state.stageId-1)/10);
 let transplantMode=false,transplantSource=null;
-const music=createGardenMusic({audio:$('garden-bgm'),getContext:getAudioContext,enabled:profile.options.music,volume:profile.options.musicVolume,onChange:updateMusicStatus});
+const music=createGardenMusic({getContext:getAudioContext,enabled:profile.options.music,volume:profile.options.musicVolume,onChange:updateMusicStatus});
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const sfx=createGardenAudio({getContext:getAudioContext,isEnabled:()=>sound,isHidden:()=>document.hidden||landscape.matches});
 const feedback=createGardenFeedback({reduced});
@@ -165,7 +165,7 @@ function help(page=0){const catalog=seeds(),catalogStages=previousRules()?.STAGE
  if(helpPage===0)html=`<div class="guide-steps"><div class="guide-step"><span>1</span><div><strong>7일의 수확으로 목표에 도전해요</strong><p>총점이 최소 목표 이상이면 다음 단계가 열려요. 씨앗과 날씨는 같아도 배치에 따라 결과가 달라져요.</p></div></div><div class="guide-step"><span>2</span><div><strong>같은 식물을 세로로 모아 보세요</strong><p>${state.version<4?'이전 규칙으로 이어가는 정원이에요. 새 규칙은 시작 화면에서 선택할 수 있어요.':'같은 열 2개면 각각 +2, 3개 +4, 4개 이상 +6. 떨어져 있어도 돼요. 우물·벌집은 제외해요.'}</p></div></div><div class="guide-step"><span>3</span><div><strong>${state.version>=5?'식물 진화 + 정원 성장':'성장 보너스도 내 전략에 맞게'}</strong><p>${state.version>=6?'1·3·5일 수확 뒤 한 송이를 골라 2단계 또는 3단계로 키워요. ':state.version===5?'1·3·5일 수확 뒤 처음 여섯 종류 중 한 송이를 진화시켜요. ':''}2·4·6일에는 정원 능력을 하나 골라요.${state.version===2?' 새 규칙으로 시작하면 제안 새로고침도 열려요.':' 마음에 드는 제안이 없으면 매 선택마다 한 번 무료로 새로고침해요.'}</p></div></div></div><p class="sheet-note">${state.version>=7?'옮겨심기: 아래 모종삽 → 식물 → 빈 땅. 성장·진화 유지, 한 정원에 한 번.<br>':''}끝없는 단계 · 4×4 → 7×7 · 수확 전 되돌리기</p>`;
  else if(helpPage<=plantPages){const entries=ids.slice((helpPage-1)*3,helpPage*3),stages=previousRules()?.STAGES??STAGES;html=`<div class="plant-guide">${entries.map(id=>{const unlock=stages.find(s=>s.pool.includes(id)).id;return `<article>${plantArt(id,2,{small:true})}<div><h3>${catalog[id].name} <small>${unlock===1?'처음부터':unlock+'단계 해금'}</small></h3><p>${catalog[id].description}</p></div></article>`;}).join('')}</div><p class="sheet-note">현재 ${stage().pool.length}종 / 전체 ${ids.length}종.<br>이웃은 상하좌우. 개별 점수는 식물을 눌러 확인해요.</p>`;}
  else if(helpPage===rewardsPage)html=`<div class="sheet-body"><p><strong>모모의 부탁</strong>은 2·4·6일에 찾아와요. 해결하고 수확하면 꽃잎 +2. 같은 단계의 같은 날 보상은 한 번만 받아요. 놓쳐도 감점은 없어요.</p><p><strong>각 단계 첫 클리어는 꽃잎 +3.</strong> 꽃잎을 모으면 꾸미기 수첩의 장식이 열려요. 장식을 골라도 꽃잎은 줄지 않아요.</p><p><strong>목표를 넘겨 별을 모아요.</strong><br>목표 100% ★ · 115% ★★ · 140% ★★★<br>재도전으로 더 높은 별 기록에 도전해 보세요.</p></div><p class="sheet-note">꽃잎과 장식은 수확 점수에 영향을 주지 않아요.</p>`;
- else html=`<div class="sheet-body"><p><strong>같은 날씨, 다른 정원으로.</strong> 101단계부터도 7×7 새 정원은 계속 이어져요. 재도전은 같은 씨앗과 날씨, 다른 배치로 도전해요.</p><p><strong>이 브라우저에 자동 저장돼요.</strong> 현재 정원·해금·최고 기록을 이어갈 수 있어요. 다른 기기와 동기화되지 않으며 브라우저 데이터를 지우면 사라져요.</p><p>${state.version<4?'진행 중인 정원은 기존 규칙으로 보존했어요. 아래에서 다시 시작하면 세로열 보너스와 높은 목표가 적용돼요.':'다시 시작해도 이미 깬 단계와 최고 기록, 꽃잎과 장식은 남아요.'}</p></div><div class="sheet-actions"><button class="secondary" id="reset-run">${state.version<4?'새 규칙으로 이 단계 시작':'이 단계 처음부터'}</button></div><p class="sheet-note">광고 자리 미리보기 정원 v25 · 정식 판매 버전이 아닙니다.</p>`;
+ else html=`<div class="sheet-body"><p><strong>같은 날씨, 다른 정원으로.</strong> 101단계부터도 7×7 새 정원은 계속 이어져요. 재도전은 같은 씨앗과 날씨, 다른 배치로 도전해요.</p><p><strong>이 브라우저에 자동 저장돼요.</strong> 현재 정원·해금·최고 기록을 이어갈 수 있어요. 다른 기기와 동기화되지 않으며 브라우저 데이터를 지우면 사라져요.</p><p>${state.version<4?'진행 중인 정원은 기존 규칙으로 보존했어요. 아래에서 다시 시작하면 세로열 보너스와 높은 목표가 적용돼요.':'다시 시작해도 이미 깬 단계와 최고 기록, 꽃잎과 장식은 남아요.'}</p></div><div class="sheet-actions"><button class="secondary" id="reset-run">${state.version<4?'새 규칙으로 이 단계 시작':'이 단계 처음부터'}</button></div><p class="sheet-note">햇빛정원 v26 · 정식 판매 버전이 아닙니다.</p>`;
  html+=`<div class="guide-pages"><button class="secondary" id="help-prev" ${helpPage===0?'disabled':''}>← 이전</button><span>${helpPage+1} / ${pages}</span><button class="secondary" id="help-next">${helpPage===lastPage?'닫기':'다음 →'}</button></div>`;
  openSheet('help',helpPage===0?'다르게 심어, 더 크게':helpPage===rewardsPage?'모모와 꽃잎, 별':helpPage===lastPage?'다시, 다른 선택으로':'식물 도감','정원사의 수첩',html);$('help-prev').onclick=()=>help(helpPage-1);$('help-next').onclick=()=>helpPage===lastPage?closeSheet():help(helpPage+1);if($('reset-run'))$('reset-run').onclick=()=>confirmStage(state.stageId);
 }
@@ -245,9 +245,13 @@ $('close-sheet').onclick=dismissSheet;$('sheet').addEventListener('cancel',e=>{e
 $('sheet').addEventListener('close',()=>{if(!paused||rotatedSheet)return;paused=false;music.setHidden(document.hidden);weatherScene.update(state.weather[state.day-1],{paused:homeVisible});});
 landscape.addEventListener('change',()=>{if(landscape.matches){feedback.clear();sfx.stop();}if(landscape.matches&&$('sheet').open){rotatedSheet=true;$('sheet').close();}else if(!landscape.matches&&rotatedSheet){rotatedSheet=false;$('sheet').showModal();}fitBoard();});
 new ResizeObserver(fitBoard).observe($('board-space'));window.addEventListener('resize',fitBoard);
-// A real click (including keyboard activation) unlocks audio; initial page load stays silent.
+// Unlock in the first real touch stack; click also supports keyboard activation.
+function activateAudio(){music.activate();sfx.prepare();}
+document.addEventListener('pointerdown',event=>{
+ if(event.isTrusted&&!event.target.closest('#toggle-music,#music-retry'))activateAudio();
+},{capture:true,passive:true});
 document.addEventListener('click',event=>{
- if(event.isTrusted&&event.target.closest('button')&&!event.target.closest('#toggle-music,#music-retry'))music.activate();
+ if(event.isTrusted&&event.target.closest('button')&&!event.target.closest('#toggle-music,#music-retry'))activateAudio();
 },{capture:true});
 document.addEventListener('visibilitychange',()=>{music.setHidden(document.hidden||paused);if(document.hidden){feedback.clear();sfx.stop();}});
 reduced.addEventListener('change',()=>feedback.clear());
@@ -321,7 +325,7 @@ function settings(){
  updateSoundControls();const status=music.getStatus(),volume=Math.round(profile.options.musicVolume*100);
  openSheet('settings','음악과 함께, 내 속도로','소리와 손끝',`
   <div class="music-settings">
-   <div class="setting-row music-row"><div><strong>정원의 배경음악</strong><small>BEATWAVE · James K<br><span id="music-status" data-state="${status.state}" aria-live="polite">${musicStateLabel(status.state)}</span></small></div><button id="toggle-music" class="toggle" role="switch" aria-label="배경음악" aria-checked="${profile.options.music}"></button></div>
+   <div class="setting-row music-row"><div><strong>정원의 배경음악</strong><small>BEATWAVE · James K · 연주곡<br><span id="music-status" data-state="${status.state}" aria-live="polite">${musicStateLabel(status.state)}</span></small></div><button id="toggle-music" class="toggle" role="switch" aria-label="배경음악" aria-checked="${profile.options.music}"></button></div>
    <div class="music-volume-row"><label for="music-volume">음악 크기</label><input id="music-volume" type="range" min="0" max="100" step="5" value="${volume}" aria-label="배경음악 음량" aria-valuetext="${volume}%"><output id="music-volume-value" for="music-volume">${volume}%</output></div>
    <button id="music-retry" class="secondary music-retry" ${status.enabled&&['blocked','error'].includes(status.state)?'':'hidden'}>눌러서 음악 재생 ♫</button>
   </div>
