@@ -1,5 +1,6 @@
 /** Small garden-tool icon set. Decorative: the surrounding control supplies its name. */
 const paths = Object.freeze({
+  water: '<path d="M12 2C9 7 5 10 5 15a7 7 0 0 0 14 0c0-5-4-8-7-13Z"/><path d="M8 15a4 4 0 0 0 4 4"/>',
   trowel: '<path d="m14 3 7 7-3 3-7-7ZM12 8 5 15c-2 2-2 5-2 6 1 0 4 0 6-2l7-7M8 17l4-4"/>',
   home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
   map: '<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15M15 6v15"/>',

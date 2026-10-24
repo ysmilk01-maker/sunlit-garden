@@ -1,5 +1,7 @@
-import * as core from './evolution-core.mjs?v=20261020-27';
+import * as core from './evolution-core.mjs?v=20261024-28';
 import * as classic from './campaign-core.mjs';
+import { seedFacts, newSeedMaturity } from './seed-explainer.mjs?v=20261024-28';
+import { upgradeEffectCopy } from './choice-copy.mjs?v=20261024-28';
 
 // Advice is a projection of the selected save's rules, never a second score engine.
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
@@ -13,7 +15,7 @@ const entriesFor = state => state.version === 2 ? { seeds: core.LEGACY_SEEDS, up
 const isPlant = (state, tile) => !!tile && own(entriesFor(state).seeds, tile.type) && tile.type !== 'hive';
 const isResting = (state, tile) => tile?.evolution?.id === 'solar' && state.day > tile.evolution.day
   && (state.day - tile.evolution.day) % 2 === 1;
-const validState = state => !!state && [2, 3, 4, 5, 6, 7, 8].includes(state.version) && Array.isArray(state.board)
+const validState = state => !!state && [2, 3, 4, 5, 6, 7, 8, 9].includes(state.version) && Array.isArray(state.board)
   && state.board.length === state.cols * state.rows && Number.isInteger(state.day) && state.day >= 1 && state.day <= core.RUN_DAYS;
 const dayLabel = day => `${day}일차 수확`;
 
@@ -117,19 +119,23 @@ function seedReason(state, index, type) {
       ? `상하좌우 클로버 ${c.count('clover')}송이가 서로 이웃 보너스를 만들어요.`
       : `클로버 이웃 ${Math.min(2, c.count('clover'))}송이를 세고, 다른 식물 이웃은 ${c.otherKinds.size ? '있어요' : '아직 없어요'}.`;
     case 'lavender': return `이 자리의 다른 식물 이웃은 ${c.otherKinds.size}종이에요. 종류마다 보너스를 받아요.`;
-    case 'berry': return c.weather === 'rain' ? '오늘은 비라 새 베리도 +3점. 열매는 세 번째 수확부터예요.' : `${day + 2}일차부터 열매가 익어요. 오늘은 새 베리의 기본 수확부터 받아요.`;
+    case 'berry': return state.version === 9
+      ? `${c.weather === 'rain' ? '오늘은 비라 새 베리도 +3점. ' : ''}열매는 성장 2회부터예요. 돌보기로 앞당길 수 있어요.`
+      : c.weather === 'rain' ? '오늘은 비라 새 베리도 +3점. 열매는 세 번째 수확부터예요.' : `${day + 2}일차부터 열매가 익어요. 오늘은 새 베리의 기본 수확부터 받아요.`;
     case 'mushroom': return c.count('well') || c.count('hive') ? '이 자리는 우물·벌집 곁이라 버섯의 그늘 조건을 채워요.' : c.weather === 'cloud' ? '오늘은 흐림이라 그늘 이웃이 없어도 날씨 +3점을 받아요.' : '이 자리에는 그늘 이웃이 없어요. 우물·벌집이나 흐린 날이 기회예요.';
     case 'hive': return `이 자리의 꽃 이웃은 ${c.flowers}송이예요. 연결된 꽃 수가 벌집의 수확을 정해요.`;
     case 'mint': return `이웃 베리 ${c.count('berry')}송이마다 민트가 +3점을 받아요.`;
     case 'tulip': return `튤립과 다른 꽃 이웃은 ${c.flowerKinds.size}종이에요. 종류마다 +2점이에요.`;
     case 'fern': return c.count('well') || c.count('mushroom') ? '이 자리는 우물·버섯 곁이라 고사리의 숲 그늘 +4를 받아요.' : '우물·버섯 이웃이 없어 숲 그늘 +4는 아직 없어요.';
-    case 'pumpkin': return `${day + 2}일차부터 잘 익은 호박 +9가 붙어요. 그전에는 작은 수확이에요.`;
+    case 'pumpkin': return state.version === 9 ? '성장 2회부터 잘 익은 호박 +9가 붙어요. 돌보기로 앞당길 수 있어요.'
+      : `${day + 2}일차부터 잘 익은 호박 +9가 붙어요. 그전에는 작은 수확이에요.`;
     case 'rose': return `이웃 벌집 ${c.count('hive')}개마다 장미가 +4점을 받아요.`;
     case 'lotus': return Math.floor(index / state.cols) === Math.floor(state.wellIndex / state.cols) || index % state.cols === state.wellIndex % state.cols
       ? '우물과 같은 행 또는 열이라 연꽃의 같은 줄 +5를 받아요.' : '우물과 같은 행·열은 아니에요. 비 오는 날에는 +4를 받아요.';
     case 'daisy': return c.edge ? '이 자리는 가장자리라 데이지가 +3점을 받아요.' : '이 자리는 안쪽이라 가장자리 +3은 없어요.';
     case 'bluebell': return c.count('mushroom') || c.count('fern') ? '버섯·고사리 이웃이 있어 초롱꽃의 숲속 이웃 +4를 받아요.' : '버섯·고사리 이웃이 없어요. 흐린 날에는 +2를 받아요.';
-    case 'strawberry': return `민트 이웃은 ${c.count('mint') ? '있어요' : '없어요'}. ${day + 2}일차부터 딸기의 익은 열매 +5도 붙어요.`;
+    case 'strawberry': return state.version === 9 ? `민트 이웃은 ${c.count('mint') ? '있어요' : '없어요'}. 성장 2회부터 열매 +5, 돌보기로 앞당길 수 있어요.`
+      : `민트 이웃은 ${c.count('mint') ? '있어요' : '없어요'}. ${day + 2}일차부터 딸기의 익은 열매 +5도 붙어요.`;
     case 'bamboo': {
       const count = [index - state.cols, index + state.cols].filter(position => position >= 0 && position < state.board.length && state.board[position]?.type === 'bamboo').length;
       return `위·아래 대나무는 ${count}송이예요. 정확히 하나일 때 두 줄기 +4를 받아요.`;
@@ -137,7 +143,8 @@ function seedReason(state, index, type) {
     case 'cactus': return `빈 이웃은 ${c.empty}칸이에요. 하나라도 남으면 선인장이 +4를 받아요.`;
     case 'hydrangea': return `${c.count('well') ? '우물 옆 추가 +3 조건을 채웠어요.' : '우물 옆 추가 +3은 없어요.'} ${c.weather === 'rain' ? '오늘 비 +4도 받아요.' : '비 오는 날에는 +4예요.'}`;
     case 'orchid': return `난초와 다른 꽃 이웃은 ${c.flowerKinds.size}종이에요. 둘 이상이면 +5를 받아요.`;
-    case 'cherry': return `다른 꽃 이웃은 ${c.flowerKinds.size ? '있어요' : '없어요'}. 오래 자란 꽃 +4는 ${day + 3}일차부터예요.`;
+    case 'cherry': return state.version === 9 ? `다른 꽃 이웃은 ${c.flowerKinds.size ? '있어요' : '없어요'}. 성장 3회부터 꽃 +4, 돌보기로 앞당길 수 있어요.`
+      : `다른 꽃 이웃은 ${c.flowerKinds.size ? '있어요' : '없어요'}. 오래 자란 꽃 +4는 ${day + 3}일차부터예요.`;
     default: return '';
   }
 }
@@ -173,7 +180,16 @@ export function seedAdvice(state, type) {
     }
     if (state.version >= 3 && type === 'clover') watch = '클로버 이웃은 둘까지만 세요. 같은 종류만 모으면 공생 +2를 놓쳐요.';
     const wait = ['berry', 'pumpkin', 'strawberry'].includes(type) ? 2 : type === 'cherry' ? 3 : 0;
-    if (wait && state.day + wait > core.RUN_DAYS) {
+    const maturity = newSeedMaturity(state, type);
+    if (maturity) {
+      watch = `성장 ${maturity.required}회가 필요해요. 돌보기는 심기 대신 한 행동을 써요.`;
+      plan = '새 씨앗을 심을지, 이미 심은 식물을 돌볼지 비교하세요.';
+    }
+    if (maturity?.possible && maturity.careNeeded) {
+      reason = `자연 성장만으로는 늦어요. 이 식물에 돌보기 ${maturity.careNeeded}회와 남은 성장을 더해야 이번 판에 익어요.`;
+      watch = '남은 돌보기를 이 식물에 쓰는 경우예요. 다른 식물과 나누면 성숙하지 못할 수 있어요.';
+      plan = '심기와 돌보기에 쓸 행동을 모두 남길지 비교하세요.';
+    } else if (maturity ? !maturity.possible : wait && state.day + wait > core.RUN_DAYS) {
       reason = '지금 심으면 이번 판 안에 성숙 보너스를 받지 못해요.';
       watch = '남은 수확에서는 기본 점수와 이웃·날씨 효과만 비교하세요.';
       plan = '이번 판은 성숙을 기다리는 배치보다 즉시 조건을 살피세요.';
@@ -195,7 +211,7 @@ export function seedAdvice(state, type) {
     return {
       role: hint.role, reason, watch, plan, nowLabel: dayLabel(state.day), nowDelta: best.now.delta,
       laterLabel: later ? dayLabel(state.day + 1) : null, laterDelta: later?.delta ?? null,
-      affected: best.now.affected, bestIndex: best.index, bestSlots, description: meta.description,
+      affected: best.now.affected, bestIndex: best.index, bestSlots, description: state.version === 9 ? seedFacts(state, type).description : meta.description,
     };
   } catch { return null; }
 }
@@ -207,11 +223,13 @@ function upgradeCondition(state, id) {
     case 'sun_pact': return `현재 해바라기는 ${count('sunflower')}송이예요. 날씨와 관계없이 각각 +2를 받아요.`;
     case 'colony': return state.version === 2 ? '상하좌우 클로버 한 이웃마다 보너스가 +1 늘어요.' : '상하좌우 클로버 이웃 둘까지, 한 이웃마다 보너스가 +1 늘어요.';
     case 'diversity': return `라벤더 ${count('lavender')}송이의 서로 다른 이웃 종류마다 +1이 더 붙어요.`;
-    case 'jam': return '세 번째 수확에 도달한 베리부터 성숙 보너스가 +3 늘어요.';
+    case 'jam': return state.version === 9 ? '성장 2회에 도달한 베리부터 성숙 보너스가 +3 늘어요. 돌보기로 앞당길 수 있어요.'
+      : '세 번째 수확에 도달한 베리부터 성숙 보너스가 +3 늘어요.';
     case 'shade': return '우물·벌집과 붙어 있는 버섯의 그늘 보너스가 +3 늘어요.';
     case 'bees': return `벌집 ${count('hive')}개의 꽃 이웃마다 벌집 수확이 +2 늘어요.`;
     case 'spring': return '우물의 상하좌우에 있는 식물마다 우물 보너스가 +2 늘어요.';
-    case 'patience': return '수확을 세 번 겪은 기물부터 매 수확 +2를 받아요. 벌집도 포함돼요.';
+    case 'patience': return state.version === 9 ? '성장 3회에 도달한 기물부터 매 수확 +2를 받아요. 돌보기 성장과 벌집도 포함돼요.'
+      : '수확을 세 번 겪은 기물부터 매 수확 +2를 받아요. 벌집도 포함돼요.';
     case 'wild': {
       const required = state.version === 2 ? core.stageFor(state).pool.length : 6;
       return `현재 ${kinds.size}종, 필요한 종류는 ${required}종이에요. ${kinds.size >= required ? '종류 조건을 채웠어요.' : `${required - kinds.size}종을 더 모아야 해요.`}`;
@@ -234,17 +252,23 @@ export function upgradeAdvice(state, id) {
     const { now, later } = twoHarvests(unchanged, chosen);
     const hint = UPGRADE_HINTS[id];
     let reason = upgradeCondition(chosen, id), watch = hint.watch, plan = hint.plan;
+    if (state.version === 9 && id === 'jam') watch = '성장 2회부터 적용돼요. 돌보기로 앞당길 수 있지만 새 베리는 바로 받지 못해요.';
+    if (state.version === 9 && id === 'patience') watch = '성장 3회부터 적용돼요. 돌보기는 아직 더 자랄 수 있는 식물에만 쓸 수 있어요.';
     if (now.delta === 0) reason = later?.delta > 0
       ? `다음 수확은 그대로예요. 현재 배치에서 ${chosen.day + 1}일차 수확부터 효과가 나타나요.`
       : `지금 배치에서는 다음 수확이 늘지 않아요. ${hint.plan}`;
     if (id === 'wild') reason = upgradeCondition(chosen, id);
     if (id === 'colony' && state.version >= 3) watch = '한 클로버는 이웃 둘까지만 강화돼요. 떨어진 같은 열은 이웃이 아니에요.';
     if (chosen.day === core.RUN_DAYS && now.delta === 0) watch = '마지막 수확이에요. 오늘 남은 심기로 조건을 만들 수 있는지 먼저 살피세요.';
-    if (id === 'jam' && chosen.day > 5) plan = '새 베리는 이번 판에 익지 않아요. 먼저 심은 베리를 확인하세요.';
+    if (id === 'jam' && chosen.day > 5) {
+      const maturity = newSeedMaturity(chosen, 'berry');
+      plan = maturity?.possible ? `새 베리를 익히려면 돌보기 ${maturity.careNeeded}회가 더 필요해요. 먼저 심은 베리와 비교하세요.`
+        : '새 베리는 이번 판에 익지 않아요. 먼저 심은 베리를 확인하세요.';
+    }
     return {
       role: hint.role, reason, watch, plan, nowLabel: dayLabel(chosen.day), nowDelta: now.delta,
       laterLabel: later ? dayLabel(chosen.day + 1) : null, laterDelta: later?.delta ?? null,
-      affected: now.affected, description: entriesFor(state).upgrades[id].description,
+      affected: now.affected, description: state.version === 9 ? upgradeEffectCopy(state, id).text : entriesFor(state).upgrades[id].description,
     };
   } catch { return null; }
 }
@@ -266,11 +290,13 @@ function evolutionReason(state, index, id, preview) {
         : `다음 수확 대상은 ${name}예요. 다른 진화 효과를 뺀 ${values.get(targets[0])}점을 한 번 더 받아요.`;
     }
     case 'cluster': return tile.age >= 2 ? '이 베리는 이미 익었어요. 다음 수확부터 한 번 더 따요.'
-      : `${chosen.day + 2 - tile.age}일차부터 익어요. 진화해도 성숙 시점은 그대로예요.`;
+      : state.version === 9 ? `${2 - tile.age}회 더 성장하면 익어요. 진화는 성장을 더하지 않지만 돌보기는 앞당길 수 있어요.`
+        : `${chosen.day + 2 - tile.age}일차부터 익어요. 진화해도 성숙 시점은 그대로예요.`;
     case 'jam': {
       const recipients = c.tiles.filter(other => isPlant(chosen, other) && other.type !== 'berry' && !isResting(chosen, other)).length;
       return tile.age >= 2 ? `다음 수확에 베리 아닌 이웃 ${recipients}송이에게 각각 +3을 나눠요. 충전 중인 꽃은 제외해요.`
-        : `${chosen.day + 2 - tile.age}일차에 익으면, 상하좌우의 베리 아닌 식물에게 각각 +3을 나눠요.`;
+        : state.version === 9 ? `${2 - tile.age}회 더 성장해 익으면, 상하좌우의 베리 아닌 식물에게 각각 +3을 나눠요. 돌보기로 앞당길 수 있어요.`
+          : `${chosen.day + 2 - tile.age}일차에 익으면, 상하좌우의 베리 아닌 식물에게 각각 +3을 나눠요.`;
     }
     case 'chorus': {
       const row = Math.floor(index / chosen.cols);
@@ -309,11 +335,16 @@ export function evolutionAdvice(state, index, id) {
     const now = compare(unchanged, chosen), hint = EVOLUTION_HINTS[id];
     const detail = core.evolutionDetails(chosen.board[index]);
     const master = core.evolutionTier(chosen.board[index]) === 3;
+    const description = state.version === 9 && ['cluster', 'jam'].includes(id)
+      ? id === 'cluster' ? `성장 2회부터 매 수확 자신을 ${master ? '두' : '한'} 번 더 수확해요. 돌보기로 성숙을 앞당길 수 있어요.`
+        : `성장 2회부터 상하좌우의 베리 아닌 식물에게 각각 +${master ? 5 : 3}점. 우물·벌집은 제외하며 돌보기로 성숙을 앞당길 수 있어요.`
+      : detail.description;
+    const watch = state.version === 9 && id === 'cluster' ? '성장 2회부터예요. 진화만으로 바로 익지 않지만 돌보기로 앞당길 수 있어요.' : hint.watch;
     return {
-      role: master ? '3단계 · 한 송이에 집중' : hint.role, reason: master ? detail.description : evolutionReason(state, index, id, preview), watch: master ? '이번 진화 기회 한 번을 써요. 다른 식물의 첫 진화와 수확 증가량을 비교하세요.' : hint.watch, plan: hint.plan,
+      role: master ? '3단계 · 한 송이에 집중' : hint.role, reason: master ? description : evolutionReason(state, index, id, preview), watch: master ? '이번 진화 기회 한 번을 써요. 다른 식물의 첫 진화와 수확 증가량을 비교하세요.' : watch, plan: hint.plan,
       nowLabel: dayLabel(preview.nextDay), nowDelta: preview.nextDelta,
       laterLabel: dayLabel(preview.followingDay), laterDelta: preview.followingDelta,
-      affected: now.affected, description: detail.description,
+      affected: now.affected, description,
     };
   } catch { return null; }
 }

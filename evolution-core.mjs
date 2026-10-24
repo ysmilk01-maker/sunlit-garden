@@ -1,10 +1,10 @@
 import * as base from './campaign-core.mjs';
 import * as legacy from './evolution-legacy-v5.mjs';
-import { GARDEN_DESIGNS, isGardenDesign, designStarterOffers, designProgress } from './garden-designs.mjs';
+import { GARDEN_DESIGNS, isGardenDesign, designStarterOffers, designProgress } from './garden-designs.mjs?v=20261024-28';
 
 // Versions 2–5 retain their original rules; only new v6 runs gain a third tier.
 export * from './campaign-core.mjs';
-export { GARDEN_DESIGNS, designProgress } from './garden-designs.mjs';
+export { GARDEN_DESIGNS, designProgress } from './garden-designs.mjs?v=20261024-28';
 
 export const EVOLUTION_DAYS = Object.freeze([1, 3, 5]);
 export const EVOLUTIONS = Object.freeze({
@@ -44,7 +44,8 @@ const TYPES = new Set(Object.values(EVOLUTIONS).map(choice => choice.type));
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const copy = value => JSON.parse(JSON.stringify(value));
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-const isV6 = state => state?.version === 6 || state?.version === 7 || state?.version === 8;
+const isV6 = state => [6, 7, 8, 9].includes(state?.version);
+const hasDesign = state => [8, 9].includes(state?.version);
 const asBase = state => ({ ...state, version: 4 });
 const isPlant = tile => !!tile && own(base.SEEDS, tile.type) && tile.type !== 'hive';
 const near = (index, cols, rows) => [index - cols, index + cols, ...(index % cols ? [index - 1] : []), ...(index % cols < cols - 1 ? [index + 1] : [])].filter(i => i >= 0 && i < cols * rows);
@@ -79,16 +80,86 @@ export function newDesignedRun(seed, stageId = 1, designId = null) {
   return isGardenDesign(designId) ? chooseDesign(state, designId) : state;
 }
 
+// Caring replaces a draft action; it never adds a free plant or a free harvest.
+// Only these species have a natural growth/maturity benefit still to unlock.
+const CARE_LIMITS = Object.freeze({
+  sunflower: 2, clover: 2, lavender: 2, mint: 2, tulip: 2, rose: 2,
+  daisy: 2, bluebell: 2, hydrangea: 2, orchid: 2,
+  berry: 2, pumpkin: 2, strawberry: 2, cherry: 3,
+});
+
+export function newTendedRun(seed, stageId = 1, designId = null) {
+  const state = { ...newDesignedRun(seed, stageId), version: 9, careCount: 0, careDays: [] };
+  return isGardenDesign(designId) ? chooseDesign(state, designId) : state;
+}
+
+export function caresRemaining(state) {
+  if (state?.version !== 9 || state.phase !== 'plant' || !isGardenDesign(state.designId)
+    || !Number.isInteger(state.careCount) || state.careCount < 0 || state.careCount >= 2
+    || !Array.isArray(state.careDays) || state.careDays.includes(state.day)
+    || state.placements >= base.picksToday(state)) return 0;
+  return 2 - state.careCount;
+}
+
+export function careTargets(state) {
+  if (!caresRemaining(state) || !Array.isArray(state.board)) return [];
+  return state.board.flatMap((tile, index) => tile && own(CARE_LIMITS, tile.type)
+    && Number.isInteger(tile.age) && tile.age >= 0 && tile.age < CARE_LIMITS[tile.type] ? [index] : []);
+}
+
+export function care(state, index) {
+  if (!Number.isInteger(index) || !careTargets(state).includes(index)) return state;
+  // Reuse the draft API only to derive its normal next offer sequence. Its
+  // temporary plant is discarded; the saved board contains only the cared plant.
+  const source = asBase(state), empty = state.board.findIndex(tile => tile === null);
+  const draft = base.plant(source, empty, state.offers[0]);
+  if (draft === source) return state;
+  const board = state.board.map((tile, position) => tile ? {
+    ...tile, ...(tile.evolution ? { evolution: { ...tile.evolution } } : {}),
+    ...(position === index ? { age: tile.age + 1, careCount: (tile.careCount || 0) + 1 } : {}),
+  } : null);
+  return log(state, {
+    ...state, board, placements: draft.placements, offers: [...draft.offers],
+    history: draft.history, careCount: state.careCount + 1, careDays: [...state.careDays, state.day],
+  }, { kind: 'care', index });
+}
+
+/** Pure comparison of the existing garden, without assuming future draws.
+ * before/after are today's forecasts. delta = ownDelta + neighborDelta.
+ * Future deltas only age the present plants and use the recorded weather;
+ * null days/deltas mean that forecast would fall outside the seven-day run.
+ */
+export function previewCare(state, index) {
+  const tended = care(state, index);
+  if (tended === state) return null;
+  const before = forecast(state), after = forecast(tended);
+  const ownValue = result => result.tiles.find(tile => tile.index === index)?.value || 0;
+  const delta = after.total - before.total, ownDelta = ownValue(after) - ownValue(before);
+  const project = (value, offset) => ({
+    ...value, day: value.day + offset,
+    board: value.board.map(tile => tile && tile.type !== 'well'
+      ? { ...tile, age: Math.min(7, tile.age + offset) } : tile ? { ...tile } : null),
+  });
+  const future = offset => state.day + offset <= base.RUN_DAYS
+    ? forecast(project(tended, offset)).total - forecast(project(state, offset)).total : null;
+  return {
+    index, type: state.board[index].type, beforeAge: state.board[index].age, afterAge: tended.board[index].age,
+    before, after, delta, ownDelta, neighborDelta: delta - ownDelta, remaining: 2 - tended.careCount,
+    nextDay: state.day < base.RUN_DAYS ? state.day + 1 : null, nextDelta: future(1),
+    followingDay: state.day + 2 <= base.RUN_DAYS ? state.day + 2 : null, followingDelta: future(2),
+  };
+}
+
 export function chooseDesign(state, id) {
-  if (state?.version !== 8 || state.designId !== null || !isGardenDesign(id)
+  if (!hasDesign(state) || state.designId !== null || !isGardenDesign(id)
     || state.phase !== 'plant' || state.day !== 1 || state.placements !== 0
     || state.score !== 0 || state.ledger?.length !== 0 || state.harvests?.length !== 0) return state;
   return log(state, { ...state, designId: id, offers: designStarterOffers(state.seed, id) }, { kind: 'design', id });
 }
 
 export function transplantsRemaining(state) {
-  return [7, 8].includes(state?.version) && state.phase === 'plant' && state.transplantsUsed === 0
-    && (state.version !== 8 || isGardenDesign(state.designId)) ? 1 : 0;
+  return [7, 8, 9].includes(state?.version) && state.phase === 'plant' && state.transplantsUsed === 0
+    && (!hasDesign(state) || isGardenDesign(state.designId)) ? 1 : 0;
 }
 
 export function transplant(state, from, to) {
@@ -102,13 +173,13 @@ export function transplant(state, from, to) {
 
 export function undoAvailable(state) {
   if (!state || state.phase !== 'plant') return false;
-  if ([7, 8].includes(state.version)) return ['plant', 'transplant'].includes(state.ledger?.at(-1)?.kind);
+  if ([7, 8, 9].includes(state.version)) return ['plant', 'transplant', ...(state.version === 9 ? ['care'] : [])].includes(state.ledger?.at(-1)?.kind);
   if (state.version === 6) return state.ledger?.at(-1)?.kind === 'plant' && state.history?.length > 0;
   return state.history?.length > 0;
 }
 
 export function plant(state, index, type) {
-  if (state?.version === 8 && !isGardenDesign(state.designId)) return state;
+  if (hasDesign(state) && !isGardenDesign(state.designId)) return state;
   if (!isV6(state)) return legacy.plant(state, index, type);
   const source = asBase(state), next = base.plant(source, index, type);
   return next === source ? state : log(state, next, { kind: 'plant', index, type });
@@ -116,7 +187,7 @@ export function plant(state, index, type) {
 
 export function undo(state) {
   if (!isV6(state)) return legacy.undo(state);
-  if ([7, 8].includes(state.version)) {
+  if ([7, 8, 9].includes(state.version)) {
     if (!undoAvailable(state)) return state;
     const replay = replayLedger(state, state.ledger.slice(0, -1));
     return replay?.phase === 'plant' && replay.day === state.day ? replay : state;
@@ -231,12 +302,12 @@ export function forecast(state) {
     total: tiles.reduce((sum, tile) => sum + tile.value, 0), tiles,
     comboCount: tiles.filter(tile => tile.reasons.some(reason => reason.combo)).length,
     evolutionEffects,
-    ...(state.version === 8 ? { designProgress: design } : {}),
+    ...(hasDesign(state) ? { designProgress: design } : {}),
   };
 }
 
 export function harvest(state) {
-  if (state?.version === 8 && !isGardenDesign(state.designId)) return state;
+  if (hasDesign(state) && !isGardenDesign(state.designId)) return state;
   if (!isV6(state)) return legacy.harvest(state);
   const source = asBase(state), next = base.harvest(source);
   if (next === source) return state;
@@ -295,6 +366,7 @@ function actionMatches(action, keys) {
 function replayAction(state, action) {
   if (action?.kind === 'design' && actionMatches(action, ['kind', 'id'])) return chooseDesign(state, action.id);
   if (action?.kind === 'plant' && actionMatches(action, ['kind', 'index', 'type'])) return plant(state, action.index, action.type);
+  if (action?.kind === 'care' && actionMatches(action, ['kind', 'index'])) return care(state, action.index);
   if (action?.kind === 'harvest' && actionMatches(action, ['kind'])) return harvest(state);
   if (action?.kind === 'upgrade' && actionMatches(action, ['kind', 'id'])) return chooseUpgrade(state, action.id);
   if (action?.kind === 'reroll' && actionMatches(action, ['kind'])) return rerollUpgrades(state);
@@ -305,10 +377,11 @@ function replayAction(state, action) {
 
 function replayLedger(input, ledger = input?.ledger, snapshot = null) {
   if (!isV6(input) || !base.isStageId(input.stageId) || !Number.isSafeInteger(input.seed) || input.seed < 0
-    || !Array.isArray(ledger) || ledger.length > (input.version === 8 ? 65 : 64)) return null;
-  let replay = input.version === 8 ? newDesignedRun(input.seed, input.stageId)
+    || !Array.isArray(ledger) || ledger.length > (hasDesign(input) ? 65 : 64)) return null;
+  let replay = input.version === 9 ? newTendedRun(input.seed, input.stageId)
+    : input.version === 8 ? newDesignedRun(input.seed, input.stageId)
     : input.version === 7 ? newStrategicRun(input.seed, input.stageId) : newRun(input.seed, input.stageId);
-  if (snapshot?.kind === 'start' && replay.day === snapshot.day && (input.version !== 8 || !ledger.length)) return replay;
+  if (snapshot?.kind === 'start' && replay.day === snapshot.day && (!hasDesign(input) || !ledger.length)) return replay;
   for (const action of ledger) {
     const day = replay.day, next = replayAction(replay, action);
     if (next === replay) return null;
@@ -322,12 +395,12 @@ function replayLedger(input, ledger = input?.ledger, snapshot = null) {
 // Mission history must use positions at that harvest, even if a plant is moved
 // later. These bounded ledger snapshots never infer old positions from today's board.
 export function harvestSnapshot(state, day) {
-  if (![7, 8].includes(state?.version) || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
+  if (![7, 8, 9].includes(state?.version) || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
   return replayLedger(state, state.ledger, { kind: 'harvest', day });
 }
 
 export function dayStartSnapshot(state, day) {
-  if (![7, 8].includes(state?.version) || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
+  if (![7, 8, 9].includes(state?.version) || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
   return replayLedger(state, state.ledger, { kind: 'start', day });
 }
 
@@ -335,7 +408,7 @@ export function sanitizeState(input) {
   if (!isV6(input)) return legacy.sanitizeState(input);
   try {
     if (!base.isStageId(input.stageId) || !Number.isSafeInteger(input.seed) || input.seed < 0
-      || !Array.isArray(input.ledger) || input.ledger.length > (input.version === 8 ? 65 : 64)) return null;
+      || !Array.isArray(input.ledger) || input.ledger.length > (hasDesign(input) ? 65 : 64)) return null;
     const replay = replayLedger(input);
     // Replaying rejects forged tile abilities, double harvests, stale undo boards,
     // altered offers, receipts, counters and future/duplicate evolution choices.
@@ -377,13 +450,13 @@ export function sanitizeCampaign(input) {
       if (!base.isStageId(id) || String(id) !== key || !value || !Number.isSafeInteger(value.best) || value.best < 0
         || typeof value.cleared !== 'boolean' || !Number.isSafeInteger(value.attempts) || value.attempts < 1
         || !Array.isArray(value.runIds) || value.runIds.length !== value.attempts || new Set(value.runIds).size !== value.runIds.length) return null;
-      if (value.runIds.some(runId => typeof runId !== 'string' || !new RegExp(`^${id}:(0|[1-9][0-9]*)(:v[34567]|:v8:(pollinator|moon|rainbow))?$`).test(runId)
+      if (value.runIds.some(runId => typeof runId !== 'string' || !new RegExp(`^${id}:(0|[1-9][0-9]*)(:v[34567]|:v[89]:(pollinator|moon|rainbow))?$`).test(runId)
         || !Number.isSafeInteger(Number(runId.split(':')[1]))) || !value.runIds.includes(value.lastRunId)) return null;
       const oldTarget = id <= 100 ? base.stageFor({ version: 2, stageId: id }).target : null;
       const v8Target = id <= 100 ? base.stageFor({ version: 3, stageId: id }).target : null;
       const hasLegacyRuns = value.runIds.some(runId => runId.split(':').length === 2);
       const hasV8Runs = value.runIds.some(runId => runId.endsWith(':v3'));
-      const hasNewRuns = value.runIds.some(runId => /:v[4567]$|:v8:(pollinator|moon|rainbow)$/.test(runId));
+      const hasNewRuns = value.runIds.some(runId => /:v[4567]$|:v[89]:(pollinator|moon|rainbow)$/.test(runId));
       if (id > 100 && (hasLegacyRuns || hasV8Runs)) return null;
       let targetAtClear = value.targetAtClear, earnedStars = value.earnedStars;
       if (!own(value, 'targetAtClear') && !own(value, 'earnedStars')) {
@@ -424,7 +497,7 @@ export function recordResult(campaign, state) {
   const clean = sanitizeState(state), progress = sanitizeCampaign(campaign);
   if (!clean || clean.phase !== 'over' || !progress || !base.isStageId(clean.stageId) || clean.stageId > progress.unlocked) return campaign;
   const stage = base.stageFor(clean), previous = progress.stages[stage.id];
-  const runId = `${stage.id}:${clean.seed}${clean.version >= 3 ? `:v${clean.version}` : ''}${clean.version === 8 ? `:${clean.designId}` : ''}`;
+  const runId = `${stage.id}:${clean.seed}${clean.version >= 3 ? `:v${clean.version}` : ''}${hasDesign(clean) ? `:${clean.designId}` : ''}`;
   const runIds = previous?.runIds.includes(runId) ? [...previous.runIds] : [...(previous?.runIds || []), runId];
   const best = Math.max(previous?.best || 0, clean.score), cleared = !!previous?.cleared || clean.score >= stage.target;
   const targetAtClear = previous?.targetAtClear ?? (clean.score >= stage.target ? stage.target : null);

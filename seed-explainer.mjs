@@ -1,8 +1,8 @@
-import * as core from './evolution-core.mjs?v=20261020-27';
+import * as core from './evolution-core.mjs?v=20261024-28';
 
 // Text describes the rules; all placement scores come from the selected engine.
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
-const versions = new Set([2, 3, 4, 5, 6, 7, 8]);
+const versions = new Set([2, 3, 4, 5, 6, 7, 8, 9]);
 const entriesFor = state => state?.version === 2 ? core.LEGACY_SEEDS
   : state?.version === 3 ? core.V8_SEEDS : core.SEEDS;
 const baseValues = Object.freeze({
@@ -16,6 +16,22 @@ const oldFlowers = ['sunflower', 'clover', 'lavender', 'tulip', 'rose'];
 const allFlowers = [...oldFlowers, 'lotus', 'daisy', 'bluebell', 'hydrangea', 'orchid', 'cherry'];
 const rule = (id, label, text) => ({ id, label, text });
 const has = (state, id) => Array.isArray(state.upgrades) && state.upgrades.includes(id);
+const maturityGrowth = Object.freeze({ berry: 2, pumpkin: 2, strawberry: 2, cherry: 3 });
+
+// A conservative bound for a NEW seed, not an assumed future action or score.
+// Today's planting takes one action; any care today needs another. Later days
+// can supply at most one care each, still subject to the two-care garden limit.
+export function newSeedMaturity(state, type) {
+  if (state?.version !== 9 || !own(maturityGrowth, type) || !Number.isInteger(state.day)
+    || state.day < 1 || state.day > core.RUN_DAYS) return null;
+  const required = maturityGrowth[type], natural = core.RUN_DAYS - state.day;
+  const careNeeded = Math.max(0, required - natural);
+  const remaining = Math.max(0, 2 - (state.careCount || 0));
+  const today = state.phase === 'plant' && !(state.careDays || []).includes(state.day)
+    && core.picksToday(state) - state.placements >= 2 ? 1 : 0;
+  const possibleCare = Math.min(remaining, natural + today);
+  return { required, natural, careNeeded, possibleCare, possible: careNeeded <= possibleCare };
+}
 
 function sharedRules(state, type) {
   if (type === 'well') return [];
@@ -24,7 +40,9 @@ function sharedRules(state, type) {
     shared.push(rule('well', '우물', `상하좌우 우물 옆이면 +${has(state, 'spring') ? 4 : 2}. 대각선은 제외해요.`));
     if (state.version >= 4) shared.push(rule('column', '같은 열', '같은 세로열에 같은 종류가 자신 포함 2/3/4개 이상이면 각각 +2/+4/+6. 붙어 있지 않아도 돼요.'));
   }
-  if (has(state, 'patience')) shared.push(rule('patience', '오래된 정원', '세 번 수확을 마친 뒤부터 매 수확 +2. 벌집도 받아요.'));
+  if (has(state, 'patience')) shared.push(rule('patience', '오래된 정원', state.version === 9
+    ? '성장 3회부터 매 수확 +2. 돌보기 성장도 세며 벌집도 받아요. 벌집은 돌볼 수 없어요.'
+    : '세 번 수확을 마친 뒤부터 매 수확 +2. 벌집도 받아요.'));
   if (type !== 'hive' && has(state, 'wild')) {
     const count = state.version === 2 ? '이 단계에서 열린 모든 종류' : '우물 제외 여섯 종류 이상';
     shared.push(rule('wild', '작은 생태계', `${count}를 심으면 이 식물 +2. 벌집은 종류에 포함되지만 점수는 받지 않아요.`));
@@ -42,7 +60,7 @@ function sharedRules(state, type) {
 export function seedFacts(state, type) {
   if (!state || !versions.has(state.version) || typeof type !== 'string'
     || !own(baseValues, type) || (type !== 'well' && !own(entriesFor(state), type))) return null;
-  const entries = entriesFor(state), rules = [];
+  const entries = entriesFor(state), rules = [], tended = state.version === 9;
   const add = (id, label, text) => rules.push(rule(id, label, text));
   let condition = '';
   const pair = has(state, 'colony') ? 3 : 2;
@@ -52,7 +70,9 @@ export function seedFacts(state, type) {
   const bees = has(state, 'bees') ? 6 : 4;
   const spring = has(state, 'spring') ? 4 : 2;
   if (type !== 'well') add('base', '기본 수확', `조건 없이 기본 ${baseValues[type]}점.${type === 'hive' ? ' 벌집은 꽃 이웃이 있어야 꽃 보너스를 받아요.' : ''}`);
-  if (grows.has(type)) add('growth', '성장', '수확할 때마다 다음 수확 +1. 성장 보너스는 최대 +2예요.');
+  if (grows.has(type)) add('growth', '성장', tended
+    ? '성장 1회마다 +1, 최대 +2예요. 수확 후 또는 돌보기로 성장해요.'
+    : '수확할 때마다 다음 수확 +1. 성장 보너스는 최대 +2예요.');
   switch (type) {
     case 'sunflower':
       condition = '맑은 날 +3';
@@ -69,8 +89,9 @@ export function seedFacts(state, type) {
       add('diversity', '다양한 이웃', `상하좌우의 라벤더 아닌 식물 종류마다 자신에게 +${kinds}. 같은 종류는 한 번만 세며 우물·벌집은 제외해요.`);
       break;
     case 'berry':
-      condition = `3번째 수확부터 +${fruit}`;
-      add('mature', '익은 열매', `심은 뒤 세 번째 수확부터 자신에게 +${fruit}. 첫 두 번은 열매 보너스가 없어요.`);
+      condition = tended ? `성장 2회부터 +${fruit}` : `3번째 수확부터 +${fruit}`;
+      add('mature', '익은 열매', tended ? `성장 2회부터 자신에게 +${fruit}. 돌보기로 성숙을 앞당길 수 있어요.`
+        : `심은 뒤 세 번째 수확부터 자신에게 +${fruit}. 첫 두 번은 열매 보너스가 없어요.`);
       add('rain', '날씨', '비 오는 날 자신에게 +3. 새 베리도 받아요.');
       break;
     case 'mushroom':
@@ -100,8 +121,9 @@ export function seedFacts(state, type) {
       add('cloud', '날씨', '흐린 날 자신에게 +3. 숲 그늘과 함께 받아요.');
       break;
     case 'pumpkin':
-      condition = '3번째 수확부터 +9';
-      add('mature', '익은 호박', '심은 뒤 세 번째 수확부터 자신에게 +9. 첫 두 번은 성숙 보너스가 없어요.');
+      condition = tended ? '성장 2회부터 +9' : '3번째 수확부터 +9';
+      add('mature', '익은 호박', tended ? '성장 2회부터 자신에게 +9. 돌보기로 성숙을 앞당길 수 있어요.'
+        : '심은 뒤 세 번째 수확부터 자신에게 +9. 첫 두 번은 성숙 보너스가 없어요.');
       add('rain', '날씨', '비 오는 날 자신에게 +2.');
       break;
     case 'rose':
@@ -123,8 +145,9 @@ export function seedFacts(state, type) {
       add('cloud', '날씨', '흐린 날 자신에게 +2.');
       break;
     case 'strawberry':
-      condition = '3번째 수확부터 +5';
-      add('mature', '익은 딸기', '심은 뒤 세 번째 수확부터 자신에게 +5.');
+      condition = tended ? '성장 2회부터 +5' : '3번째 수확부터 +5';
+      add('mature', '익은 딸기', tended ? '성장 2회부터 자신에게 +5. 돌보기로 성숙을 앞당길 수 있어요.'
+        : '심은 뒤 세 번째 수확부터 자신에게 +5.');
       add('mint', '민트 이웃', '상하좌우 민트가 하나라도 있으면 자신에게 +4. 여러 송이여도 한 번이에요.');
       add('rain', '날씨', '비 오는 날 자신에게 +2.');
       break;
@@ -148,8 +171,9 @@ export function seedFacts(state, type) {
       add('flowers', '다채로운 꽃', '상하좌우에 난초 아닌 서로 다른 꽃 두 종류 이상이면 자신에게 +5. 같은 꽃 두 송이로는 부족해요.');
       break;
     case 'cherry':
-      condition = '4번째 수확부터 +4';
-      add('mature', '활짝 핀 벚꽃', '심은 뒤 네 번째 수확부터 자신에게 +4. 성장 보너스와 함께 받아요.');
+      condition = tended ? '성장 3회부터 +4' : '4번째 수확부터 +4';
+      add('mature', '활짝 핀 벚꽃', tended ? '성장 3회부터 자신에게 +4. 돌보기로 앞당기며 성장 보너스와 함께 받아요.'
+        : '심은 뒤 네 번째 수확부터 자신에게 +4. 성장 보너스와 함께 받아요.');
       add('flowers', '꽃 친구', '벚꽃 아닌 꽃이 상하좌우에 하나라도 있으면 자신에게 +2. 여러 송이여도 한 번이에요.');
       break;
     case 'well':
@@ -162,7 +186,7 @@ export function seedFacts(state, type) {
   return {
     type, name: type === 'well' ? '우물' : entries[type].name,
     base: baseValues[type], label: type === 'well' ? '직접 수확 0' : `기본 ${baseValues[type]}`,
-    condition, description: type === 'well' ? rules[0].text : entries[type].description,
+    condition, description: type === 'well' ? rules[0].text : tended ? rules.filter(item => item.id !== 'flower-types').map(item => item.text).join(' ') : entries[type].description,
     rules, shared: sharedRules(state, type), support: type === 'well',
   };
 }
@@ -206,7 +230,8 @@ function placementResult(state, type, index, before, candidate, selection, bestS
       reasonNegative: changes.reduce((sum, tile) => sum + tile.reasonNegative, 0),
     },
     totalDelta: after.total - before.total, beforeTotal: before.total, afterTotal: after.total,
-    assumption: `${state.day}일차 날씨·현재 성장·강화·진화 기준. 이후 심기와 다음 날 변화는 제외해요.`,
+    assumption: state.version === 9 ? `${state.day}일차 날씨·현재 성장·강화·진화 기준. 이후 심기·돌보기와 다음 날 변화는 제외해요.`
+      : `${state.day}일차 날씨·현재 성장·강화·진화 기준. 이후 심기와 다음 날 변화는 제외해요.`,
   };
 }
 

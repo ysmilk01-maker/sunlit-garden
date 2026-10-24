@@ -1,12 +1,26 @@
-import { seedFacts } from './seed-explainer.mjs?v=20261020-27';
-import { UPGRADES, LEGACY_UPGRADES, V8_UPGRADES, RUN_DAYS } from './evolution-core.mjs?v=20261020-27';
+import { seedFacts, newSeedMaturity } from './seed-explainer.mjs?v=20261024-28';
+import { UPGRADES, LEGACY_UPGRADES, V8_UPGRADES, RUN_DAYS } from './evolution-core.mjs?v=20261024-28';
 
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
-const valid = state => !!state && [2, 3, 4, 5, 6, 7, 8].includes(state.version);
+const valid = state => !!state && [2, 3, 4, 5, 6, 7, 8, 9].includes(state.version);
 const has = (state, id) => Array.isArray(state.upgrades) && state.upgrades.includes(id);
 const upgradesFor = state => state.version === 2 ? LEGACY_UPGRADES
   : state.version === 3 ? V8_UPGRADES : UPGRADES;
 const join = lines => lines.join(' · ');
+
+// Raw core metadata stays frozen for old saves. Only the v9 presentation replaces
+// harvest-count wording now that care can add growth between harvests.
+export function versionedGrowthCopy(state, text) {
+  if (state?.version !== 9 || typeof text !== 'string') return text;
+  return text
+    .replace(/(?:심은 뒤 )?(?:세 번째|3번째) 수확부터/g, '성장 2회부터')
+    .replace(/(?:심은 뒤 )?(?:네 번째|4번째) 수확부터/g, '성장 3회부터')
+    .replace(/수확을 세 번 겪은/g, '성장 3회에 도달한')
+    .replace(/(?:세 번|3번) 수확을 마친 뒤부터/g, '성장 3회부터')
+    .replace(/(?:세 번|3번) 수확을 마친/g, '성장 3회에 도달한')
+    .replace(/세 번 수확한 뒤부터/g, '성장 3회부터')
+    .replace(/수확할 때마다 다음 수확(?:에)? \+1/g, '성장 1회당 +1');
+}
 
 // Concise characteristics, not a second scoring engine. Actual point previews
 // remain in seed-explainer; these lines describe the current save's rules.
@@ -85,13 +99,16 @@ export function seedInlineCopy(state, type) {
     default: return null;
   }
   const matureAfter = ['berry', 'pumpkin', 'strawberry'].includes(type) ? 2 : type === 'cherry' ? 3 : 0;
-  const warning = matureAfter && Number.isInteger(state.day) && state.day + matureAfter > RUN_DAYS
-    ? '이번 판 성숙 보너스 없음' : null;
+  const outlook = newSeedMaturity(state, type);
+  const warning = outlook ? !outlook.possible ? '이번 판 성숙 보너스 없음'
+    : outlook.careNeeded ? `성숙하려면 돌보기 ${outlook.careNeeded}회 필요` : null
+    : matureAfter && Number.isInteger(state.day) && state.day + matureAfter > RUN_DAYS
+      ? '이번 판 성숙 보너스 없음' : null;
   // Replace the maturity promise in-place, so the small panel needs no extra row.
   if (warning) lines[0] = warning;
   return {
     name: facts.name, base: facts.base, baseLabel: `${facts.label}점 / 수확`,
-    growth: facts.rules.some(rule => rule.id === 'growth') ? '수확 후 +1씩 · 최대 +2' : null,
+    growth: facts.rules.some(rule => rule.id === 'growth') ? state.version === 9 ? '성장 1회당 +1 · 최대 +2' : '수확 후 +1씩 · 최대 +2' : null,
     lines, text: join(lines), warning, neighborNote: '옆 = 상하좌우 · 대각선 제외',
   };
 }
@@ -111,7 +128,7 @@ export function upgradeEffectCopy(state, id) {
       lines = ['라벤더: 옆 다른 식물 종류당 +2 → +3', '같은 종 한 번 · 우물·벌집 제외'];
       break;
     case 'jam':
-      lines = ['베리 성숙 보너스 +6 → +9', '심은 뒤 3번째 수확부터'];
+      lines = ['베리 성숙 보너스 +6 → +9', state.version === 9 ? '성장 2회부터 · 돌보기로 앞당김' : '심은 뒤 3번째 수확부터'];
       break;
     case 'shade':
       lines = ['버섯: 우물·벌집 옆 +4 → +7', '이웃이 여럿이어도 한 번만'];
@@ -123,7 +140,8 @@ export function upgradeEffectCopy(state, id) {
       lines = ['우물 옆 식물 보너스 +2 → +4', '상하좌우만 적용 · 벌집 제외'];
       break;
     case 'patience':
-      lines = ['3번 수확을 마친 기물마다 추가 +2', '4번째 수확부터 · 벌집 포함 · 우물 제외'];
+      lines = state.version === 9 ? ['성장 3회에 도달한 기물마다 추가 +2', '돌보기 성장 포함 · 벌집 포함 · 우물 제외']
+        : ['3번 수확을 마친 기물마다 추가 +2', '4번째 수확부터 · 벌집 포함 · 우물 제외'];
       break;
     case 'wild':
       lines = [state.version === 2 ? '이 단계에 열린 모든 종류를 심으면 식물 +2' : '우물 제외 6종 이상 심으면 식물 +2', '벌집은 종류에 포함 · 점수 대상은 제외'];

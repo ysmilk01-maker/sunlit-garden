@@ -35,7 +35,7 @@ export const DESIGN_FLOWERS = new Set([
 ]);
 
 export function designSeedFit(state, type) {
-  if (state?.version !== 8 || !state.designId) return null;
+  if (![8, 9].includes(state?.version) || !state.designId) return null;
   if (state.designId === 'pollinator') {
     if (type === 'hive') return '설계 핵심 · 꽃 곁에 벌집';
     if (DESIGN_FLOWERS.has(type)) return '설계 재료 · 벌집 곁의 꽃';

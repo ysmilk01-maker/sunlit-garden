@@ -1,6 +1,6 @@
-import {evolve,evolvableTiles,evolutionChoices,harvestSnapshot,dayStartSnapshot,GARDEN_DESIGNS} from './evolution-core.mjs?v=20261020-27';
+import {evolve,evolvableTiles,evolutionChoices,harvestSnapshot,dayStartSnapshot,GARDEN_DESIGNS} from './evolution-core.mjs?v=20261024-28';
 import {newRun as classicRun} from './campaign-core.mjs?v=20261013-9';
-import { SEEDS, newRun, stageFor, isStageId as validStageId, picksToday, plant, harvest, forecast, chooseUpgrade, sanitizeState, sanitizeCampaign } from './evolution-core.mjs?v=20261020-27';
+import { SEEDS, newRun, stageFor, isStageId as validStageId, picksToday, plant, harvest, forecast, chooseUpgrade, sanitizeState, sanitizeCampaign } from './evolution-core.mjs?v=20261024-28';
 import { newRun as evolutionV5Run } from './evolution-legacy-v5.mjs?v=20261015-20';
 import { newRun as legacyRun } from './campaign-legacy-v7.mjs?v=20261013-9';
 import { newRun as previousRun } from './campaign-legacy-v8.mjs?v=20261013-9';
@@ -16,6 +16,8 @@ export const DECORATIONS = {
 const MISSION_REWARD = 2;
 const CLEAR_REWARD = 3;
 const MISSION_DAYS = [2, 4, 6];
+const SNAPSHOT_VERSIONS = new Set([7, 8, 9]);
+const DESIGN_VERSIONS = new Set([8, 9]);
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const validMusicVolume = value => Number.isFinite(value) && value >= 0 && value <= 1;
@@ -32,7 +34,7 @@ const WEATHER_MISSIONS = {
 // Reconstruct a day's first offer through public campaign actions. This avoids copying
 // its private RNG and keeps the mission stable after harvest clears undo history.
 function firstOffers(state, day) {
-  if (state.version === 7 || state.version === 8) return dayStartSnapshot(state, day)?.offers || [];
+  if (SNAPSHOT_VERSIONS.has(state.version)) return dayStartSnapshot(state, day)?.offers || [];
   if (day === state.day && state.history?.[0]?.offers) return state.history[0].offers;
   if (day === state.day && state.phase === 'plant' && state.placements === 0) return state.offers;
   const key = `${state.version}:${state.stageId}:${state.seed}:${day}`;
@@ -52,11 +54,11 @@ function firstOffers(state, day) {
 }
 
 export function missionFor(state, day = state?.day) {
-  if (state?.version === 7 || state?.version === 8) state = harvestSnapshot(state, day) || state;
+  if (SNAPSHOT_VERSIONS.has(state?.version)) state = harvestSnapshot(state, day) || state;
   const stage = stageFor(state);
-  if (!stage || ![2, 3, 4, 5, 6, 7, 8].includes(state?.version) || !MISSION_DAYS.includes(day) || day > state.day || !Array.isArray(state.board) || state.board.length !== stage.cols * stage.rows) return null;
+  if (!stage || ![2, 3, 4, 5, 6, 7, 8, 9].includes(state?.version) || !MISSION_DAYS.includes(day) || day > state.day || !Array.isArray(state.board) || state.board.length !== stage.cols * stage.rows) return null;
   const sameDayHistory = day === state.day ? state.history?.[0] : null;
-  const startBoard = (state.version === 7 || state.version === 8 ? dayStartSnapshot(state, day)?.board : null) || sameDayHistory?.board || state.board.map(tile => tile && tile.type !== 'well' && tile.plantedDay >= day ? null : tile);
+  const startBoard = (SNAPSHOT_VERSIONS.has(state.version) ? dayStartSnapshot(state, day)?.board : null) || sameDayHistory?.board || state.board.map(tile => tile && tile.type !== 'well' && tile.plantedDay >= day ? null : tile);
   const todayBoard = state.board.map(tile => tile && tile.type !== 'well' && tile.plantedDay > day ? null : tile);
   const today = todayBoard.map((tile, index) => ({ tile, index })).filter(({ tile }) => tile && tile.type !== 'well' && tile.plantedDay === day && stage.pool.includes(tile.type));
   const mission = { id: `${stage.id}:${state.seed}:${day}`, day, reward: MISSION_REWARD, optional: true, required: 1, progress: 0, complete: false };
@@ -189,7 +191,7 @@ export function claimClear(profile, state) {
 
 export function claimDesign(profile, state) {
   // Preserve legacy call/identity behavior and never infer a design for an old run.
-  if (state?.version !== 8 || state.phase !== 'over') return profile;
+  if (!DESIGN_VERSIONS.has(state?.version) || state.phase !== 'over') return profile;
   const clean = sanitizeProfile(profile), valid = sanitizeState(state);
   if (!clean || !valid || !starsFor(valid) || !own(GARDEN_DESIGNS, valid.designId)) return profile;
   const receipt = valid.lastHarvest?.designProgress;
