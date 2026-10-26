@@ -1,4 +1,4 @@
-import {transplant,forecast,RUN_DAYS} from './evolution-core.mjs?v=20261024-28';
+import {transplant,forecast,RUN_DAYS} from './evolution-core.mjs?v=20261026-29';
 
 // The projection retains evolution clocks and uses the actual score engine.
 // It assumes no subsequent planting, evolution or upgrade.

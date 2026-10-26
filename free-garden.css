@@ -1,0 +1,25 @@
+
+.app.free-run .actions{grid-template-columns:50px 70px minmax(0,1fr)!important;gap:6px}
+.app.free-run .actions .secondary{min-height:44px;padding:4px;font-size:11px;flex-direction:column}
+.app.free-run .actions #harvest{font-size:12px}
+.free-run .seed-potential{font-size:10px;color:#cce7bd}
+.free-run .seed-base{font-size:10px;white-space:normal;line-height:1.25}
+.free-run .seed-condition{font-size:10px}
+.free-tool-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.free-tool-list button{min-height:86px;display:flex;flex-direction:column;white-space:normal;gap:7px;padding:12px}
+.free-tool-list strong{font-size:15px;color:#ffe6a5}
+.free-tool-list small{font-size:11px;line-height:1.5}
+.exchange-hand,.free-plant-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.free-plant-actions button{font-size:11px;min-height:44px;padding:5px}
+.exchange-hand button{display:flex;flex-direction:column;gap:4px;padding:8px;font-size:12px}
+.exchange-hand button[aria-pressed=true]{outline:2px solid #ffe6a5;background:#315d3c}
+.exchange-hand img,.exchange-hand svg,.exchange-catalog img,.exchange-catalog svg{width:40px;height:40px}
+.exchange-catalog{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.exchange-catalog button{display:flex;flex-direction:column;gap:5px;padding:10px;white-space:normal}
+.exchange-catalog small{font-size:10px}
+.free-run #picks{color:#ffe19b;font-weight:800}
+.free-run .plot.best,.free-run .plot.preview-anchor{outline:none}
+@media(max-height:620px){.free-run .seed-condition{display:none}.free-run .seed-potential{font-size:9px}.free-run .seed-inline-meta{font-size:9px}}
+
+.free-run .seed-potential{color:#35563a!important;text-shadow:none;font-weight:700}
+.free-run .strategy-evolution small{line-height:1.4;white-space:normal}

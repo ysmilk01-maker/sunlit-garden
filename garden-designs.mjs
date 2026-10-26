@@ -60,7 +60,7 @@ export function designStarterOffers(seed, designId) {
  * For a completed harvest, use lastHarvest.designProgress (the receipt).
  */
 export function designProgress(state) {
-  if (![8, 9].includes(state?.version) || !isGardenDesign(state.designId)
+  if (![8, 9, 10].includes(state?.version) || !isGardenDesign(state.designId)
     || !Array.isArray(state.board) || !Number.isInteger(state.cols) || state.cols < 1
     || !Number.isInteger(state.rows) || state.rows < 1
     || state.board.length !== state.cols * state.rows

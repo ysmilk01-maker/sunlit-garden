@@ -1,8 +1,8 @@
-import * as core from './evolution-core.mjs?v=20261024-28';
+import * as core from './evolution-core.mjs?v=20261026-29';
 
 // Text describes the rules; all placement scores come from the selected engine.
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
-const versions = new Set([2, 3, 4, 5, 6, 7, 8, 9]);
+const versions = new Set([2, 3, 4, 5, 6, 7, 8, 9, 10]);
 const entriesFor = state => state?.version === 2 ? core.LEGACY_SEEDS
   : state?.version === 3 ? core.V8_SEEDS : core.SEEDS;
 const baseValues = Object.freeze({
@@ -22,10 +22,16 @@ const maturityGrowth = Object.freeze({ berry: 2, pumpkin: 2, strawberry: 2, cher
 // Today's planting takes one action; any care today needs another. Later days
 // can supply at most one care each, still subject to the two-care garden limit.
 export function newSeedMaturity(state, type) {
-  if (state?.version !== 9 || !own(maturityGrowth, type) || !Number.isInteger(state.day)
+  if (![9,10].includes(state?.version) || !own(maturityGrowth, type) || !Number.isInteger(state.day)
     || state.day < 1 || state.day > core.RUN_DAYS) return null;
   const required = maturityGrowth[type], natural = core.RUN_DAYS - state.day;
   const careNeeded = Math.max(0, required - natural);
+  if(state.version===10){
+    const today=state.phase==='plant'?Math.max(0,core.picksToday(state)-state.placements-1):0;
+    const future=Array.from({length:natural},(_,i)=>core.picksToday({...state,day:state.day+i+1})).reduce((a,b)=>a+b,0);
+    const possibleCare=Math.min(required,today+future);
+    return {required,natural,careNeeded,possibleCare,possible:careNeeded<=possibleCare};
+  }
   const remaining = Math.max(0, 2 - (state.careCount || 0));
   const today = state.phase === 'plant' && !(state.careDays || []).includes(state.day)
     && core.picksToday(state) - state.placements >= 2 ? 1 : 0;
@@ -40,7 +46,7 @@ function sharedRules(state, type) {
     shared.push(rule('well', '우물', `상하좌우 우물 옆이면 +${has(state, 'spring') ? 4 : 2}. 대각선은 제외해요.`));
     if (state.version >= 4) shared.push(rule('column', '같은 열', '같은 세로열에 같은 종류가 자신 포함 2/3/4개 이상이면 각각 +2/+4/+6. 붙어 있지 않아도 돼요.'));
   }
-  if (has(state, 'patience')) shared.push(rule('patience', '오래된 정원', state.version === 9
+  if (has(state, 'patience')) shared.push(rule('patience', '오래된 정원', state.version >= 9
     ? '성장 3회부터 매 수확 +2. 돌보기 성장도 세며 벌집도 받아요. 벌집은 돌볼 수 없어요.'
     : '세 번 수확을 마친 뒤부터 매 수확 +2. 벌집도 받아요.'));
   if (type !== 'hive' && has(state, 'wild')) {
@@ -60,7 +66,7 @@ function sharedRules(state, type) {
 export function seedFacts(state, type) {
   if (!state || !versions.has(state.version) || typeof type !== 'string'
     || !own(baseValues, type) || (type !== 'well' && !own(entriesFor(state), type))) return null;
-  const entries = entriesFor(state), rules = [], tended = state.version === 9;
+  const entries = entriesFor(state), rules = [], tended = state.version >= 9;
   const add = (id, label, text) => rules.push(rule(id, label, text));
   let condition = '';
   const pair = has(state, 'colony') ? 3 : 2;
@@ -230,7 +236,7 @@ function placementResult(state, type, index, before, candidate, selection, bestS
       reasonNegative: changes.reduce((sum, tile) => sum + tile.reasonNegative, 0),
     },
     totalDelta: after.total - before.total, beforeTotal: before.total, afterTotal: after.total,
-    assumption: state.version === 9 ? `${state.day}일차 날씨·현재 성장·강화·진화 기준. 이후 심기·돌보기와 다음 날 변화는 제외해요.`
+    assumption: state.version >= 9 ? `${state.day}일차 날씨·현재 성장·강화·진화 기준. 이후 심기·돌보기와 다음 날 변화는 제외해요.`
       : `${state.day}일차 날씨·현재 성장·강화·진화 기준. 이후 심기와 다음 날 변화는 제외해요.`,
   };
 }

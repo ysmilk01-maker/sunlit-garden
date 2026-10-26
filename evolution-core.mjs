@@ -1,10 +1,10 @@
 import * as base from './campaign-core.mjs';
 import * as legacy from './evolution-legacy-v5.mjs';
-import { GARDEN_DESIGNS, isGardenDesign, designStarterOffers, designProgress } from './garden-designs.mjs?v=20261024-28';
+import { GARDEN_DESIGNS, isGardenDesign, designStarterOffers, designProgress } from './garden-designs.mjs?v=20261026-29';
 
 // Versions 2–5 retain their original rules; only new v6 runs gain a third tier.
 export * from './campaign-core.mjs';
-export { GARDEN_DESIGNS, designProgress } from './garden-designs.mjs?v=20261024-28';
+export { GARDEN_DESIGNS, designProgress } from './garden-designs.mjs?v=20261026-29';
 
 export const EVOLUTION_DAYS = Object.freeze([1, 3, 5]);
 export const EVOLUTIONS = Object.freeze({
@@ -44,8 +44,8 @@ const TYPES = new Set(Object.values(EVOLUTIONS).map(choice => choice.type));
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const copy = value => JSON.parse(JSON.stringify(value));
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-const isV6 = state => [6, 7, 8, 9].includes(state?.version);
-const hasDesign = state => [8, 9].includes(state?.version);
+const isV6 = state => [6, 7, 8, 9, 10].includes(state?.version);
+const hasDesign = state => [8, 9, 10].includes(state?.version);
 const asBase = state => ({ ...state, version: 4 });
 const isPlant = tile => !!tile && own(base.SEEDS, tile.type) && tile.type !== 'hive';
 const near = (index, cols, rows) => [index - cols, index + cols, ...(index % cols ? [index - 1] : []), ...(index % cols < cols - 1 ? [index + 1] : [])].filter(i => i >= 0 && i < cols * rows);
@@ -94,6 +94,7 @@ export function newTendedRun(seed, stageId = 1, designId = null) {
 }
 
 export function caresRemaining(state) {
+  if (state?.version === 10) return canAct(state) ? picksToday(state)-state.placements : 0;
   if (state?.version !== 9 || state.phase !== 'plant' || !isGardenDesign(state.designId)
     || !Number.isInteger(state.careCount) || state.careCount < 0 || state.careCount >= 2
     || !Array.isArray(state.careDays) || state.careDays.includes(state.day)
@@ -108,6 +109,11 @@ export function careTargets(state) {
 }
 
 export function care(state, index) {
+  if (state?.version === 10) {
+    if (!Number.isInteger(index) || !careTargets(state).includes(index)) return state;
+    const board=copy(state.board); board[index].age++; board[index].careCount=(board[index].careCount||0)+1;
+    return log(state,{...state,board,placements:state.placements+1,careCount:state.careCount+1,careDays:[...state.careDays,state.day]},{kind:'care',index});
+  }
   if (!Number.isInteger(index) || !careTargets(state).includes(index)) return state;
   // Reuse the draft API only to derive its normal next offer sequence. Its
   // temporary plant is discarded; the saved board contains only the cared plant.
@@ -144,7 +150,7 @@ export function previewCare(state, index) {
     ? forecast(project(tended, offset)).total - forecast(project(state, offset)).total : null;
   return {
     index, type: state.board[index].type, beforeAge: state.board[index].age, afterAge: tended.board[index].age,
-    before, after, delta, ownDelta, neighborDelta: delta - ownDelta, remaining: 2 - tended.careCount,
+    before, after, delta, ownDelta, neighborDelta: delta - ownDelta, remaining: state.version===10 ? picksToday(tended)-tended.placements : 2 - tended.careCount,
     nextDay: state.day < base.RUN_DAYS ? state.day + 1 : null, nextDelta: future(1),
     followingDay: state.day + 2 <= base.RUN_DAYS ? state.day + 2 : null, followingDelta: future(2),
   };
@@ -158,7 +164,8 @@ export function chooseDesign(state, id) {
 }
 
 export function transplantsRemaining(state) {
-  return [7, 8, 9].includes(state?.version) && state.phase === 'plant' && state.transplantsUsed === 0
+  if (state?.version===10) return canAct(state) ? picksToday(state)-state.placements : 0;
+  return [7, 8, 9, 10].includes(state?.version) && state.phase === 'plant' && state.transplantsUsed === 0
     && (!hasDesign(state) || isGardenDesign(state.designId)) ? 1 : 0;
 }
 
@@ -168,17 +175,25 @@ export function transplant(state, from, to) {
     || !state.board[from] || state.board[from].type === 'well' || state.board[to] !== null) return state;
   const board = state.board.map(tile => tile ? { ...tile, ...(tile.evolution ? { evolution: { ...tile.evolution } } : {}) } : null);
   board[to] = board[from]; board[from] = null;
-  return log(state, { ...state, board, transplantsUsed: 1 }, { kind: 'transplant', from, to });
+  return log(state, { ...state, board, transplantsUsed: state.transplantsUsed+1, ...(state.version===10?{placements:state.placements+1}:{}) }, { kind: 'transplant', from, to });
 }
 
 export function undoAvailable(state) {
   if (!state || state.phase !== 'plant') return false;
-  if ([7, 8, 9].includes(state.version)) return ['plant', 'transplant', ...(state.version === 9 ? ['care'] : [])].includes(state.ledger?.at(-1)?.kind);
+  if ([7, 8, 9, 10].includes(state.version)) return ['plant', 'transplant', ...(state.version >= 9 ? ['care'] : []), ...(state.version===10?['prune','exchange']:[])].includes(state.ledger?.at(-1)?.kind);
   if (state.version === 6) return state.ledger?.at(-1)?.kind === 'plant' && state.history?.length > 0;
   return state.history?.length > 0;
 }
 
 export function plant(state, index, type) {
+  if (state?.version===10) {
+    if (!canAct(state) || !Number.isInteger(index) || index<0 || index>=state.board.length || state.board[index]!==null || !state.offers.includes(type)) return state;
+    const board=copy(state.board); board[index]={type,age:0,plantedDay:state.day};
+    const offers=[...state.offers], slot=offers.indexOf(type), pool=base.stageFor(state).pool.filter(id=>!offers.includes(id));
+    const salt=(state.seed+state.day*131+state.ledger.length*719)>>>0;
+    offers[slot]=pool[salt%pool.length]||type;
+    return log(state,{...state,board,offers,placements:state.placements+1},{kind:'plant',index,type});
+  }
   if (hasDesign(state) && !isGardenDesign(state.designId)) return state;
   if (!isV6(state)) return legacy.plant(state, index, type);
   const source = asBase(state), next = base.plant(source, index, type);
@@ -187,7 +202,7 @@ export function plant(state, index, type) {
 
 export function undo(state) {
   if (!isV6(state)) return legacy.undo(state);
-  if ([7, 8, 9].includes(state.version)) {
+  if ([7, 8, 9, 10].includes(state.version)) {
     if (!undoAvailable(state)) return state;
     const replay = replayLedger(state, state.ledger.slice(0, -1));
     return replay?.phase === 'plant' && replay.day === state.day ? replay : state;
@@ -309,17 +324,20 @@ export function forecast(state) {
 export function harvest(state) {
   if (hasDesign(state) && !isGardenDesign(state.designId)) return state;
   if (!isV6(state)) return legacy.harvest(state);
-  const source = asBase(state), next = base.harvest(source);
+  if (state.version===10 && (!isGardenDesign(state.designId) || state.phase!=='plant')) return state;
+  const source = asBase(state); if(state.version===10) source.placements=base.picksToday(source);
+  const next = base.harvest(source);
   if (next === source) return state;
   const result = { ...forecast(state), day: state.day, weather: state.weather[state.day - 1] };
   let scored = {
     ...next, version: state.version, score: state.score + result.total,
+    ...(state.version===10?{offers:[...state.offers]}:{}),
     harvests: [...state.harvests, result], lastHarvest: result,
   };
   if (EVOLUTION_DAYS.includes(state.day) && candidateIndices(scored).length) {
     scored = {
       ...scored, day: state.day, phase: 'evolve', placements: state.placements,
-      offers: [...state.offers], evolutionNextOffers: [...next.offers],
+      offers: [...state.offers], evolutionNextOffers: [...(state.version===10?state.offers:next.offers)],
     };
   }
   return log(state, scored, { kind: 'harvest' });
@@ -328,7 +346,7 @@ export function harvest(state) {
 export function chooseUpgrade(state, id) {
   if (!isV6(state)) return legacy.chooseUpgrade(state, id);
   const source = asBase(state), next = base.chooseUpgrade(source, id);
-  return next === source ? state : log(state, next, { kind: 'upgrade', id });
+  return next === source ? state : log(state, state.version===10?{...next,offers:[...state.offers]}:next, { kind: 'upgrade', id });
 }
 
 export function rerollsRemaining(state) {
@@ -364,6 +382,8 @@ function actionMatches(action, keys) {
 }
 
 function replayAction(state, action) {
+  if(action?.kind==='prune' && actionMatches(action,['kind','index'])) return prune(state,action.index);
+  if(action?.kind==='exchange' && actionMatches(action,['kind','from','to'])) return exchangeSeed(state,action.from,action.to);
   if (action?.kind === 'design' && actionMatches(action, ['kind', 'id'])) return chooseDesign(state, action.id);
   if (action?.kind === 'plant' && actionMatches(action, ['kind', 'index', 'type'])) return plant(state, action.index, action.type);
   if (action?.kind === 'care' && actionMatches(action, ['kind', 'index'])) return care(state, action.index);
@@ -377,8 +397,8 @@ function replayAction(state, action) {
 
 function replayLedger(input, ledger = input?.ledger, snapshot = null) {
   if (!isV6(input) || !base.isStageId(input.stageId) || !Number.isSafeInteger(input.seed) || input.seed < 0
-    || !Array.isArray(ledger) || ledger.length > (hasDesign(input) ? 65 : 64)) return null;
-  let replay = input.version === 9 ? newTendedRun(input.seed, input.stageId)
+    || !Array.isArray(ledger) || ledger.length > (input.version===10 ? 90 : hasDesign(input) ? 65 : 64)) return null;
+  let replay = input.version === 10 ? newFreeRun(input.seed,input.stageId) : input.version === 9 ? newTendedRun(input.seed, input.stageId)
     : input.version === 8 ? newDesignedRun(input.seed, input.stageId)
     : input.version === 7 ? newStrategicRun(input.seed, input.stageId) : newRun(input.seed, input.stageId);
   if (snapshot?.kind === 'start' && replay.day === snapshot.day && (!hasDesign(input) || !ledger.length)) return replay;
@@ -395,12 +415,12 @@ function replayLedger(input, ledger = input?.ledger, snapshot = null) {
 // Mission history must use positions at that harvest, even if a plant is moved
 // later. These bounded ledger snapshots never infer old positions from today's board.
 export function harvestSnapshot(state, day) {
-  if (![7, 8, 9].includes(state?.version) || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
+  if (![7, 8, 9, 10].includes(state?.version) || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
   return replayLedger(state, state.ledger, { kind: 'harvest', day });
 }
 
 export function dayStartSnapshot(state, day) {
-  if (![7, 8, 9].includes(state?.version) || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
+  if (![7, 8, 9, 10].includes(state?.version) || !Number.isInteger(day) || day < 1 || day > base.RUN_DAYS) return null;
   return replayLedger(state, state.ledger, { kind: 'start', day });
 }
 
@@ -408,7 +428,7 @@ export function sanitizeState(input) {
   if (!isV6(input)) return legacy.sanitizeState(input);
   try {
     if (!base.isStageId(input.stageId) || !Number.isSafeInteger(input.seed) || input.seed < 0
-      || !Array.isArray(input.ledger) || input.ledger.length > (hasDesign(input) ? 65 : 64)) return null;
+      || !Array.isArray(input.ledger) || input.ledger.length > (input.version===10 ? 90 : hasDesign(input) ? 65 : 64)) return null;
     const replay = replayLedger(input);
     // Replaying rejects forged tile abilities, double harvests, stale undo boards,
     // altered offers, receipts, counters and future/duplicate evolution choices.
@@ -450,13 +470,13 @@ export function sanitizeCampaign(input) {
       if (!base.isStageId(id) || String(id) !== key || !value || !Number.isSafeInteger(value.best) || value.best < 0
         || typeof value.cleared !== 'boolean' || !Number.isSafeInteger(value.attempts) || value.attempts < 1
         || !Array.isArray(value.runIds) || value.runIds.length !== value.attempts || new Set(value.runIds).size !== value.runIds.length) return null;
-      if (value.runIds.some(runId => typeof runId !== 'string' || !new RegExp(`^${id}:(0|[1-9][0-9]*)(:v[34567]|:v[89]:(pollinator|moon|rainbow))?$`).test(runId)
+      if (value.runIds.some(runId => typeof runId !== 'string' || !new RegExp(`^${id}:(0|[1-9][0-9]*)(:v[34567]|:v(?:8|9|10):(pollinator|moon|rainbow))?$`).test(runId)
         || !Number.isSafeInteger(Number(runId.split(':')[1]))) || !value.runIds.includes(value.lastRunId)) return null;
       const oldTarget = id <= 100 ? base.stageFor({ version: 2, stageId: id }).target : null;
       const v8Target = id <= 100 ? base.stageFor({ version: 3, stageId: id }).target : null;
       const hasLegacyRuns = value.runIds.some(runId => runId.split(':').length === 2);
       const hasV8Runs = value.runIds.some(runId => runId.endsWith(':v3'));
-      const hasNewRuns = value.runIds.some(runId => /:v[4567]$|:v[89]:(pollinator|moon|rainbow)$/.test(runId));
+      const hasNewRuns = value.runIds.some(runId => /:v[4567]$|:v(?:8|9|10):(pollinator|moon|rainbow)$/.test(runId));
       if (id > 100 && (hasLegacyRuns || hasV8Runs)) return null;
       let targetAtClear = value.targetAtClear, earnedStars = value.earnedStars;
       if (!own(value, 'targetAtClear') && !own(value, 'earnedStars')) {
@@ -523,4 +543,24 @@ export function saveCampaign(storage, campaign) {
     storage.setItem(base.CAMPAIGN_STORAGE_KEY, JSON.stringify(clean));
     return true;
   } catch { return false; }
+}
+
+
+// v29: one visible daily action budget; persistent seed hand and intentional rebuilding.
+export function picksToday(state) { return base.picksToday(state)+(state?.version===10?1:0); }
+export function newFreeRun(seed,stageId=1,designId=null) {
+  const state={...newTendedRun(seed,stageId),version:10,exchangeDays:[]};
+  return isGardenDesign(designId)?chooseDesign(state,designId):state;
+}
+export function canAct(state) {
+  return state?.version===10 && state.phase==='plant' && isGardenDesign(state.designId) && state.placements<picksToday(state);
+}
+export function prune(state,index) {
+  if(!canAct(state)||!Number.isInteger(index)||!state.board[index]||state.board[index].type==='well')return state;
+  const board=copy(state.board);board[index]=null;
+  return log(state,{...state,board,placements:state.placements+1},{kind:'prune',index});
+}
+export function exchangeSeed(state,from,to) {
+  if(!canAct(state)||state.exchangeDays.includes(state.day)||!state.offers.includes(from)||state.offers.includes(to)||!base.stageFor(state).pool.includes(to))return state;
+  return log(state,{...state,offers:state.offers.map(id=>id===from?to:id),exchangeDays:[...state.exchangeDays,state.day]},{kind:'exchange',from,to});
 }
